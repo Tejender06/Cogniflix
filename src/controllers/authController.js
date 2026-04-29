@@ -1,19 +1,3 @@
-/*
-FILE: authController.js
-
-PURPOSE:
-Handles incoming authentication requests (login, signup) and sends response.
-
-FLOW:
-Routes -> Controller -> Service
-
-USED BY:
-authRoutes.js
-
-NEXT FLOW:
-authService.js
-
-*/
 const bcrypt = require("bcryptjs");
 const pool = require("../config/db");
 const { generateToken } = require("../utils/jwt");
@@ -24,7 +8,7 @@ const isProduction = process.env.NODE_ENV === "production";
 // ================= REGISTER =================
 const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, preferred_language = 'en', location = 'Global' } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ error: "All fields are required" });
@@ -33,10 +17,10 @@ const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
-      `INSERT INTO users (name, email, password)
-       VALUES ($1, $2, $3)
-       RETURNING id, name, email`,
-      [name, email, hashedPassword]
+      `INSERT INTO users (name, email, password, preferred_language, location)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, name, email, preferred_language, location`,
+      [name, email, hashedPassword, preferred_language, location]
     );
 
     res.status(201).json(result.rows[0]);

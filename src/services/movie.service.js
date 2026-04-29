@@ -1,24 +1,36 @@
-/*
-FILE: movie.service.js
-
-PURPOSE:
-Implements business logic for retrieving and formatting movie details.
-
-FLOW:
-Controller -> Service -> Repository
-
-USED BY:
-movie.controller.js
-
-NEXT FLOW:
-movieRepository.js
-
-*/
 const axios = require("axios");
 const pool = require("../config/db");
 const { mapToEmotion } = require("../utils/emotionMap");
 
 console.log("movie.service.js loaded");
+
+function generatePseudoEmbedding(title, genre, language) {
+  const seed = (title || '') + (genre || '') + (language || '');
+  const dims = 1536;
+  const genreMap = {
+    action: 0.80,      adventure: 0.70,  animation: 0.50,
+    comedy: 0.30,      crime: -0.50,     documentary: 0.10,
+    drama: 0.20,       family: 0.35,     fantasy: 0.65,
+    history: 0.15,     horror: -0.60,    music: 0.45,
+    mystery: -0.30,    romance: 0.40,    'sci-fi': 0.60,
+    thriller: -0.40,   war: -0.70,       western: -0.20,
+    general: 0.00
+  };
+  const firstGenre = (genre || 'general').split(',')[0].toLowerCase().trim();
+  const genreBase = genreMap[firstGenre] !== undefined ? genreMap[firstGenre] : 0.0;
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) {
+    h = (Math.imul(31, h) + seed.charCodeAt(i)) | 0;
+  }
+  const vec = new Array(dims);
+  for (let i = 0; i < dims; i++) {
+    h = (Math.imul(h, 1664525) + 1013904223) | 0;
+    const noise = (h >>> 0) / 0xFFFFFFFF;
+    vec[i] = genreBase * 0.3 + (noise - 0.5) * 0.7;
+  }
+  const mag = Math.sqrt(vec.reduce((s, v) => s + v * v, 0));
+  return mag === 0 ? vec : vec.map(v => v / mag);
+}
 
 const genreIdMap = {
   28: "action",
@@ -242,6 +254,9 @@ const fetchAndStoreMovies = async () => {
                 finalGenre = "general";
               }
             }
+            
+            const embeddingVec = generatePseudoEmbedding(movie.title, finalGenre, movie.original_language);
+            const embeddingPg = '[' + embeddingVec.join(',') + ']';
 
             const emotion = mapToEmotion(genres, keywords);
             const emotionId = await getOrCreateEmotion(emotion);
@@ -257,8 +272,8 @@ const fetchAndStoreMovies = async () => {
             await pool.query(
               `
               INSERT INTO items 
-              (title, description, language, region, genre, emotion_tag_id, popularity_score, poster_url, backdrop_url)
-              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+              (title, description, language, region, genre, emotion_tag_id, popularity_score, poster_url, backdrop_url, embedding)
+              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
               ON CONFLICT (title) 
               DO UPDATE SET 
                 description = EXCLUDED.description,
@@ -267,7 +282,8 @@ const fetchAndStoreMovies = async () => {
                 poster_url = EXCLUDED.poster_url,
                 backdrop_url = EXCLUDED.backdrop_url,
                 genre = EXCLUDED.genre,
-                emotion_tag_id = EXCLUDED.emotion_tag_id
+                emotion_tag_id = EXCLUDED.emotion_tag_id,
+                embedding = EXCLUDED.embedding
               `,
               [
                 movie.title,
@@ -278,7 +294,8 @@ const fetchAndStoreMovies = async () => {
                 emotionId,
                 movie.vote_average || 0,
                 posterUrl,
-                backdropUrl
+                backdropUrl,
+                embeddingPg
               ],
             );
           } catch {
@@ -301,8 +318,6 @@ const fetchAndStoreMovies = async () => {
     throw err;
   }
 };
-
-module.exports = { fetchAndStoreMovies };
 
 /*
   TV Shows ingestion
@@ -387,6 +402,10 @@ const fetchAndStoreTvShows = async () => {
             }
 
             let finalGenre = genres.length ? genres.join(",") : "general";
+            
+            const embeddingVec = generatePseudoEmbedding(show.name, finalGenre, show.original_language);
+            const embeddingPg = '[' + embeddingVec.join(',') + ']';
+
             const emotion = mapToEmotion(genres, keywords);
             const emotionId = await getOrCreateEmotion(emotion);
 
@@ -401,8 +420,8 @@ const fetchAndStoreTvShows = async () => {
             await pool.query(
               `
               INSERT INTO items 
-              (title, description, language, region, genre, emotion_tag_id, popularity_score, poster_url, backdrop_url, content_type)
-              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+              (title, description, language, region, genre, emotion_tag_id, popularity_score, poster_url, backdrop_url, content_type, embedding)
+              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
               ON CONFLICT (title) 
               DO UPDATE SET 
                 description = EXCLUDED.description,
@@ -412,7 +431,8 @@ const fetchAndStoreTvShows = async () => {
                 backdrop_url = EXCLUDED.backdrop_url,
                 genre = EXCLUDED.genre,
                 emotion_tag_id = EXCLUDED.emotion_tag_id,
-                content_type = EXCLUDED.content_type
+                content_type = EXCLUDED.content_type,
+                embedding = EXCLUDED.embedding
               `,
               [
                 show.name, // TV shows use 'name' instead of 'title'
@@ -424,7 +444,8 @@ const fetchAndStoreTvShows = async () => {
                 show.vote_average || 0,
                 posterUrl,
                 backdropUrl,
-                'tv'
+                'tv',
+                embeddingPg
               ],
             );
           } catch (e) {

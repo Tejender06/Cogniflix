@@ -1,19 +1,3 @@
-/*
-FILE: movieRoutes.js
-
-PURPOSE:
-Defines API endpoints for fetching movie data.
-
-FLOW:
-Client -> Routes -> Controller
-
-USED BY:
-app.js
-
-NEXT FLOW:
-movie.controller.js
-
-*/
 const express = require("express");
 const router = express.Router();
 const pool = require("../config/db");
@@ -41,12 +25,16 @@ router.get("/trending", async (req, res) => {
 router.get("/", async (req, res) => {
   try {
     const { genre, emotion, search } = req.query;
-    let query = `
-      SELECT it.*, et.name as emotion_name 
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, parseInt(req.query.limit) || 20);
+    const offset = (page - 1) * limit;
+
+    let baseQuery = `
       FROM items it 
       LEFT JOIN emotion_tags et ON it.emotion_tag_id = et.id
       WHERE it.content_type = 'movie'
     `;
+    
     const values = [];
     const conditions = [];
 
@@ -64,16 +52,21 @@ router.get("/", async (req, res) => {
     }
 
     if (conditions.length > 0) {
-      query += " AND " + conditions.join(" AND ");
+      baseQuery += " AND " + conditions.join(" AND ");
     }
 
-    query += " ORDER BY it.popularity_score DESC NULLS LAST LIMIT 100";
+    const countQuery = `SELECT COUNT(*) AS total ` + baseQuery;
+    const dataQuery = `SELECT it.*, et.name as emotion_name ` + baseQuery + 
+                      ` ORDER BY it.popularity_score DESC NULLS LAST LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
 
-    const moviesResult = await pool.query(query, values);
+    const countResult = await pool.query(countQuery, values);
+    const moviesResult = await pool.query(dataQuery, [...values, limit, offset]);
 
     res.json({
       movies: moviesResult.rows,
-      total: moviesResult.rows.length,
+      total: parseInt(countResult.rows[0].total),
+      page,
+      limit
     });
   } catch (err) {
     console.error(err);

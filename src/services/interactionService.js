@@ -1,20 +1,5 @@
-/*
-FILE: interactionService.js
-
-PURPOSE:
-Implements business logic for processing user interactions and updating preferences.
-
-FLOW:
-Controller -> Service -> Repository
-
-USED BY:
-interactionController.js
-
-NEXT FLOW:
-interactionRepository.js, userPreference.repository.js
-
-*/
 const interactionRepository = require("../repositories/interactionRepository");
+const { updateUserEmbedding } = require('./embedding.service');
 
 async function handleInteraction({ user_id, content_id, interaction_type, score: passedScore }) {
   if (!user_id || !content_id || !interaction_type) {
@@ -36,12 +21,19 @@ async function handleInteraction({ user_id, content_id, interaction_type, score:
   const score = interaction_type === 'rate' ? passedScore : scoreMap[interaction_type];
 
   // 🔥 FIX: map content_id → item_id
-  return await interactionRepository.addInteraction({
+  const result = await interactionRepository.addInteraction({
     user_id,
     item_id: content_id,
     interaction_type,
     score,
   });
+
+  // Fire-and-forget embedding update — non-blocking
+  updateUserEmbedding(user_id).catch(err =>
+    console.error('[EmbeddingService] Update failed:', err.message)
+  );
+
+  return result;
 }
 
 async function getHistory(user_id) {
