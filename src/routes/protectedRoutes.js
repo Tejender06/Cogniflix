@@ -14,13 +14,13 @@ NEXT FLOW:
 Various Controllers
 
 */
-const express = require("express");
+import express from 'express';
 const router = express.Router();
 
-const authMiddleware = require("../middleware/authMiddleware");
-const interactionRoutes = require("./interactionRoutes");
+import authMiddleware from '../middleware/authMiddleware.js';
+import interactionRoutes from './interactionRoutes.js';
 
 router.use(authMiddleware);
 router.use("/interactions", interactionRoutes);
 
-module.exports = router;
+export default router;

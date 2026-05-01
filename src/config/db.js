@@ -2,7 +2,7 @@
 FILE: db.js
 
 PURPOSE:
-Creates PostgreSQL connection pool.
+Creates PostgreSQL connection pool for Supabase.
 
 FLOW:
 Backend -> DB Connection -> Query Execution
@@ -14,11 +14,21 @@ NEXT FLOW:
 Database queries
 
 */
-const { Pool } = require("pg");
+import 'dotenv/config';
+import pkg from 'pg';
+const { Pool } = pkg;
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-});
+const pool = new Pool(
+  process.env.DATABASE_URL 
+    ? { connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }
+    : {
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        host: process.env.DB_HOST,
+        port: process.env.DB_PORT,
+        database: process.env.DB_NAME,
+        ssl: { rejectUnauthorized: false },
+      }
+);
 
-module.exports = pool;
+export default pool;

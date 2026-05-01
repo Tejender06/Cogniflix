@@ -14,11 +14,11 @@ NEXT FLOW:
 interactionService.js
 
 */
-const interactionService = require("../services/interactionService");
+import * as interactionService from '../services/interactionService.js';
 
 async function addInteraction(req, res) {
   try {
-    const { content_id, interaction_type, score } = req.body;
+    const { content_id, interaction_type, score, watch_time } = req.body;
 
     if (!content_id || !interaction_type) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -29,6 +29,7 @@ async function addInteraction(req, res) {
       content_id,
       interaction_type,
       score,
+      watch_time,
     });
 
     res.status(201).json({
@@ -72,4 +73,18 @@ async function removeSaved(req, res) {
   }
 }
 
-module.exports = { addInteraction, getHistory, getSaved, removeSaved };
+async function removeInteraction(req, res) {
+  try {
+    const { itemId, interactionType } = req.params;
+    if (!itemId || !interactionType) {
+      return res.status(400).json({ error: "Missing parameters" });
+    }
+    
+    await interactionService.removeInteraction(req.user.id, itemId, interactionType);
+    res.status(200).json({ message: "Interaction removed" });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+}
+
+export { addInteraction, getHistory, getSaved, removeSaved, removeInteraction };

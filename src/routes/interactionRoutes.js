@@ -14,15 +14,16 @@ NEXT FLOW:
 interactionController.js
 
 */
-const express = require("express");
+import express from 'express';
 const router = express.Router();
 
-const interactionController = require("../controllers/interactionController");
-const authMiddleware = require("../middleware/authMiddleware");
+import * as interactionController from '../controllers/interactionController.js';
+import authMiddleware from '../middleware/authMiddleware.js';
 
 router.post("/", authMiddleware, interactionController.addInteraction);
 router.get("/history", authMiddleware, interactionController.getHistory);
 router.get("/saved", authMiddleware, interactionController.getSaved);
 router.delete("/saved/:itemId", authMiddleware, interactionController.removeSaved);
+router.delete("/:interactionType/:itemId", authMiddleware, interactionController.removeInteraction);
 
-module.exports = router;
+export default router;

@@ -14,9 +14,11 @@ NEXT FLOW:
 app.js
 
 */
-require("dotenv").config();
+import dotenv from 'dotenv';
+dotenv.config();
 
-const app = require("./app");
+import axios from 'axios';
+import app from './app.js';
 
 const PORT = process.env.PORT || 5000;
 
@@ -29,7 +31,6 @@ app.listen(PORT, (err) => {
 
   // Keep-alive ping to prevent Render sleep
   const pingUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
-  const axios = require("axios");
   setInterval(() => {
     axios.get(pingUrl)
       .then(res => console.log(`[Keep-Alive] Pinged ${pingUrl} - Status: ${res.status}`))

@@ -14,16 +14,16 @@ NEXT FLOW:
 authController.js
 
 */
-const express = require("express");
+import express from 'express';
 const router = express.Router();
 
-const {
+import {
   register,
   login,
   logout,
-} = require("../controllers/authController");
+} from '../controllers/authController.js';
 
-const protect = require("../middleware/authMiddleware");
+import protect from '../middleware/authMiddleware.js';
 
 router.post("/register", register);
 router.post("/login", login);
@@ -33,4 +33,4 @@ router.get("/me", protect, (req, res) => {
   res.json({ user: req.user });
 });
 
-module.exports = router;
+export default router;

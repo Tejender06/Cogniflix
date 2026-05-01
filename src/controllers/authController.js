@@ -1,7 +1,7 @@
-const bcrypt = require("bcryptjs");
-const pool = require("../config/db");
-const { generateToken } = require("../utils/jwt");
-const jwt = require("jsonwebtoken");
+import bcrypt from 'bcryptjs';
+import pool from '../config/db.js';
+import { generateToken } from '../utils/jwt.js';
+import jwt from 'jsonwebtoken';
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -56,11 +56,11 @@ const login = async (req, res) => {
 
     const token = generateToken(user);
 
-    // ✅ FIXED COOKIE CONFIG (explicit for localhost reliability)
+    // ✅ COOKIE CONFIG (Environment specific)
     res.cookie("token", token, {
       httpOnly: true,
-      secure: false,         // force false for localhost
-      sameSite: "lax",       // required for Postman/browser
+      secure: isProduction,         // true in prod for HTTPS
+      sameSite: isProduction ? "none" : "lax", // none in prod for cross-domain
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -81,8 +81,8 @@ const login = async (req, res) => {
 const logout = (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
-    secure: false,
-    sameSite: "lax",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
   });
 
   res.json({ message: "Logged out successfully" });
@@ -108,7 +108,7 @@ const getCurrentUser = (req, res) => {
   }
 };
 
-module.exports = {
+export {
   register,
   login,
   logout,

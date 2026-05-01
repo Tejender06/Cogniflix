@@ -1,4 +1,4 @@
-const db = require('../config/db');
+import db from '../config/db.js';
 
 async function getUserEmbedding(userId) {
   try {
@@ -28,4 +28,4 @@ async function upsertUserEmbedding(userId, vectorArray) {
   }
 }
 
-module.exports = { getUserEmbedding, upsertUserEmbedding };
+export { getUserEmbedding, upsertUserEmbedding };

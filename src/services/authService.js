@@ -14,9 +14,9 @@ NEXT FLOW:
 userRepository.js
 
 */
-const userRepo = require("../repositories/userRepository");
-const { hashPassword, comparePassword } = require("../utils/hash");
-const { generateToken } = require("../utils/jwt");
+import * as userRepo from '../repositories/userRepository.js';
+import { hashPassword, comparePassword } from '../utils/hash.js';
+import { generateToken } from '../utils/jwt.js';
 
 async function registerUser(name, email, password) {
   const existing = await userRepo.findUserByEmail(email);
@@ -38,4 +38,4 @@ async function loginUser(email, password) {
   return { token };
 }
 
-module.exports = { registerUser, loginUser };
+export { registerUser, loginUser };

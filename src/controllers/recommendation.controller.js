@@ -14,11 +14,16 @@ NEXT FLOW:
 recommendation.service.js
 
 */
-const recommendationService = require('../services/recommendation.service');
+import * as recommendationService from '../services/recommendation.service.js';
 
 const getRecommendations = async (req, res) => {
   try {
     const userId = req.user?.id || req.query.user_id;
+    let { mood, language, region, content_type } = req.query;
+
+    if (mood?.toLowerCase() === 'all') mood = null;
+    if (language?.toLowerCase() === 'all') language = null;
+    if (region?.toLowerCase() === 'all') region = null;
 
     if (!userId) {
       return res.status(400).json({
@@ -26,7 +31,7 @@ const getRecommendations = async (req, res) => {
       });
     }
 
-    const results = await recommendationService.getRecommendations(userId);
+    const results = await recommendationService.getRecommendations(userId, mood, language, region, content_type);
 
     if (!Array.isArray(results)) {
       return res.status(200).json({
@@ -50,6 +55,32 @@ const getRecommendations = async (req, res) => {
   }
 };
 
-module.exports = {
-  getRecommendations
+const getDashboard = async (req, res) => {
+  try {
+    const userId = req.user?.id || req.query.user_id;
+    let { mood, language, region } = req.query;
+
+    if (mood?.toLowerCase() === 'all') mood = null;
+    if (language?.toLowerCase() === 'all') language = null;
+    if (region?.toLowerCase() === 'all') region = null;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'user_id is required' });
+    }
+
+    const dashboardData = await recommendationService.getDashboardRecommendations(userId, mood, language, region);
+
+    return res.status(200).json({
+      user_id: userId,
+      data: dashboardData
+    });
+  } catch (error) {
+    console.error('Dashboard Controller Error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export {
+  getRecommendations,
+  getDashboard
 };

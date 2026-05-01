@@ -14,9 +14,9 @@ NEXT FLOW:
 PostgreSQL Database
 
 */
-const pool = require("../config/db");
+import pool from '../config/db.js';
 
-async function addInteraction({ user_id, item_id, interaction_type, score }) {
+async function addInteraction({ user_id, item_id, interaction_type, score, watch_time }) {
   // Prevent duplicate likes or rates per movie for a user
   if (interaction_type === 'like' || interaction_type === 'rate') {
     const existing = await pool.query(
@@ -29,10 +29,10 @@ async function addInteraction({ user_id, item_id, interaction_type, score }) {
   }
 
   const result = await pool.query(
-    `INSERT INTO interactions (user_id, item_id, interaction_type, score)
-     VALUES ($1, $2, $3, $4)
+    `INSERT INTO interactions (user_id, item_id, interaction_type, score, watch_time)
+     VALUES ($1, $2, $3, $4, $5)
      RETURNING *`,
-    [user_id, item_id, interaction_type, score]
+    [user_id, item_id, interaction_type, score, watch_time || null]
   );
 
   return result.rows[0];
@@ -40,11 +40,12 @@ async function addInteraction({ user_id, item_id, interaction_type, score }) {
 
 async function getHistory(user_id) {
   const result = await pool.query(
-    `SELECT i.item_id as id, i.interaction_type, i.created_at, it.title, it.poster_url
+    `SELECT i.item_id as id, MAX(i.interaction_type) as interaction_type, MAX(i.created_at) as created_at, MAX(it.title) as title, MAX(it.poster_url) as poster_url
      FROM interactions i
      JOIN items it ON i.item_id = it.id
      WHERE i.user_id = $1 AND i.interaction_type = 'watch'
-     ORDER BY i.created_at DESC
+     GROUP BY i.item_id
+     ORDER BY created_at DESC
      LIMIT 20`,
     [user_id]
   );
@@ -73,4 +74,4 @@ async function removeInteraction(user_id, item_id, interaction_type) {
   return result.rowCount > 0;
 }
 
-module.exports = { addInteraction, getHistory, getSaved, removeInteraction };
+export { addInteraction, getHistory, getSaved, removeInteraction };

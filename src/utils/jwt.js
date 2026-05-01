@@ -14,7 +14,7 @@ NEXT FLOW:
 None
 
 */
-const jwt = require("jsonwebtoken");
+import jwt from 'jsonwebtoken';
 
 const generateToken = (user) => {
   return jwt.sign(
@@ -24,4 +24,4 @@ const generateToken = (user) => {
   );
 };
 
-module.exports = { generateToken };
+export { generateToken };

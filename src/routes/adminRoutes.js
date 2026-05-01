@@ -14,9 +14,9 @@ NEXT FLOW:
 adminController.js
 
 */
-const express = require("express");
+import express from 'express';
 const router = express.Router();
-const { fetchAndStoreMovies, fetchAndStoreTvShows } = require("../services/movie.service");
+import { fetchAndStoreMovies, fetchAndStoreTvShows } from '../services/movie.service.js';
 
 router.get("/load-movies", async (req, res) => {
     await fetchAndStoreMovies();
@@ -28,4 +28,4 @@ router.get("/load-tv", async (req, res) => {
     res.send("TV Shows loaded successfully");
 });
 
-module.exports = router;
+export default router;

@@ -14,16 +14,17 @@ NEXT FLOW:
 Routes (authRoutes.js, movieRoutes.js, etc.)
 
 */
-const express = require("express");
-const cookieParser = require("cookie-parser");
-const cors = require("cors");
+import express from 'express';
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
 
-const authRoutes = require("./routes/authRoutes");
-const interactionRoutes = require("./routes/interactionRoutes");
-const movieRoutes = require("./routes/movieRoutes");
-const tvShowsRoutes = require("./routes/tvShowsRoutes");
-const adminRoutes = require("./routes/adminRoutes");
-const recommendationRoutes = require("./routes/recommendation.routes");
+import authRoutes from './routes/authRoutes.js';
+import interactionRoutes from './routes/interactionRoutes.js';
+import movieRoutes from './routes/movieRoutes.js';
+import webSeriesRoutes from './routes/webSeriesRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+import recommendationRoutes from './routes/recommendation.routes.js';
+import searchRoutes from './routes/search.routes.js';
 
 const app = express();
 
@@ -55,9 +56,10 @@ app.use(
 app.use("/api/auth", authRoutes);
 app.use("/api/interactions", interactionRoutes);
 app.use("/api/movies", movieRoutes);
-app.use("/api/tv-shows", tvShowsRoutes);
+app.use("/api/webseries", webSeriesRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/recommendations", recommendationRoutes);
+app.use("/api/search", searchRoutes);
 
 app.get("/api/test", (req, res) => {
   res.send("Server working");
@@ -71,7 +73,7 @@ app.get("/", (req, res) => {
       "/api/auth",
       "/api/interactions",
       "/api/movies",
-      "/api/tv-shows",
+      "/api/webseries",
       "/api/recommendations"
     ]
   });
@@ -86,4 +88,4 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Internal Server Error" });
 });
 
-module.exports = app;
+export default app;

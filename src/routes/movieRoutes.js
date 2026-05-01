@@ -1,6 +1,6 @@
-const express = require("express");
+import express from 'express';
 const router = express.Router();
-const pool = require("../config/db");
+import pool from '../config/db.js';
 
 router.get("/trending", async (req, res) => {
   try {
@@ -12,7 +12,7 @@ router.get("/trending", async (req, res) => {
       WHERE it.content_type = 'movie'
       GROUP BY it.id
       ORDER BY interaction_count DESC, it.popularity_score DESC
-      LIMIT 20
+      LIMIT 50
       `
     );
     res.json({ movies: trendingResult.rows });
@@ -26,7 +26,7 @@ router.get("/", async (req, res) => {
   try {
     const { genre, emotion, search } = req.query;
     const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.min(100, parseInt(req.query.limit) || 20);
+    const limit = Math.min(500, parseInt(req.query.limit) || 100);
     const offset = (page - 1) * limit;
 
     let baseQuery = `
@@ -57,16 +57,21 @@ router.get("/", async (req, res) => {
 
     const countQuery = `SELECT COUNT(*) AS total ` + baseQuery;
     const dataQuery = `SELECT it.*, et.name as emotion_name ` + baseQuery + 
-                      ` ORDER BY it.popularity_score DESC NULLS LAST LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
+                      ` ORDER BY it.popularity_score DESC NULLS LAST, it.created_at DESC NULLS LAST LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
 
-    const countResult = await pool.query(countQuery, values);
-    const moviesResult = await pool.query(dataQuery, [...values, limit, offset]);
+    let countResult = await pool.query(countQuery, values);
+    let moviesResult = await pool.query(dataQuery, [...values, limit, offset]);
+
+    let total = parseInt(countResult.rows[0].total);
+    
+    // The frontend SearchFeature directly uses /api/search now.
+    // So /api/movies only returns the populated database.
 
     res.json({
-      movies: moviesResult.rows,
-      total: parseInt(countResult.rows[0].total),
-      page,
-      limit
+      data: moviesResult.rows,
+      total: total,
+      page: page,
+      totalPages: Math.ceil(total / limit)
     });
   } catch (err) {
     console.error(err);
@@ -162,4 +167,4 @@ router.get("/:id/similar", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

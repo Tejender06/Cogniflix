@@ -14,7 +14,7 @@ NEXT FLOW:
 PostgreSQL Database
 
 */
-const db = require("../config/db");
+import db from '../config/db.js';
 
 async function findUserByEmail(email) {
   const result = await db.query(
@@ -32,4 +32,4 @@ async function createUser(name, email, password) {
   return result.rows[0];
 }
 
-module.exports = { findUserByEmail, createUser };
+export { findUserByEmail, createUser };

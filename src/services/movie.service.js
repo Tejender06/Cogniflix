@@ -1,6 +1,7 @@
-const axios = require("axios");
-const pool = require("../config/db");
-const { mapToEmotion } = require("../utils/emotionMap");
+import axios from 'axios';
+import pool from '../config/db.js';
+import * as emotionMap from '../utils/emotionMap.js';
+const { mapToEmotion } = emotionMap;
 
 console.log("movie.service.js loaded");
 
@@ -464,4 +465,4 @@ const fetchAndStoreTvShows = async () => {
   }
 };
 
-module.exports = { fetchAndStoreMovies, fetchAndStoreTvShows };
+export { fetchAndStoreMovies, fetchAndStoreTvShows };

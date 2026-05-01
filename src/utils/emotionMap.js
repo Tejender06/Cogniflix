@@ -28,6 +28,8 @@ const emotionMap = {
 
   adventure: "exciting",
   fantasy: "exciting",
+  "sci-fi": "exciting",
+  "science fiction": "exciting",
 
   horror: "fear",
   mystery: "curious",
@@ -48,4 +50,4 @@ function mapToEmotion(genres = [], keywords = []) {
   return "neutral";
 }
 
-module.exports = { mapToEmotion };
+export { mapToEmotion };

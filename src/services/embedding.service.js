@@ -1,5 +1,5 @@
-const db = require('../config/db');
-const { upsertUserEmbedding } = require('../repositories/userEmbedding.repository');
+import db from '../config/db.js';
+import { upsertUserEmbedding } from '../repositories/userEmbedding.repository.js';
 
 async function updateUserEmbedding(userId) {
   try {
@@ -48,4 +48,4 @@ async function updateUserEmbedding(userId) {
   }
 }
 
-module.exports = { updateUserEmbedding };
+export { updateUserEmbedding };

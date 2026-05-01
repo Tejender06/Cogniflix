@@ -1,7 +1,7 @@
-const interactionRepository = require("../repositories/interactionRepository");
-const { updateUserEmbedding } = require('./embedding.service');
+import * as interactionRepository from '../repositories/interactionRepository.js';
+import { updateUserEmbedding } from './embedding.service.js';
 
-async function handleInteraction({ user_id, content_id, interaction_type, score: passedScore }) {
+async function handleInteraction({ user_id, content_id, interaction_type, score: passedScore, watch_time }) {
   if (!user_id || !content_id || !interaction_type) {
     throw new Error("Missing required fields");
   }
@@ -26,6 +26,7 @@ async function handleInteraction({ user_id, content_id, interaction_type, score:
     item_id: content_id,
     interaction_type,
     score,
+    watch_time,
   });
 
   // Fire-and-forget embedding update — non-blocking
@@ -51,4 +52,9 @@ async function removeSavedInteraction(user_id, item_id) {
   return await interactionRepository.removeInteraction(user_id, item_id, 'save');
 }
 
-module.exports = { handleInteraction, getHistory, getSaved, removeSavedInteraction };
+async function removeInteraction(user_id, item_id, interaction_type) {
+  if (!user_id || !item_id || !interaction_type) throw new Error("Missing parameters");
+  return await interactionRepository.removeInteraction(user_id, item_id, interaction_type);
+}
+
+export { handleInteraction, getHistory, getSaved, removeSavedInteraction, removeInteraction };

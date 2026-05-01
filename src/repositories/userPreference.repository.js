@@ -14,7 +14,7 @@ NEXT FLOW:
 PostgreSQL Database
 
 */
-const db = require('../config/db');
+import db from '../config/db.js';
 
 const saveUserPreferences = async (userId, genres = [], emotions = []) => {
   const client = await db.connect();
@@ -63,7 +63,7 @@ const getUserPreferences = async (userId) => {
   return result.rows;
 };
 
-module.exports = {
+export {
   saveUserPreferences,
   getUserPreferences
 };
