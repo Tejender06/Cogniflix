@@ -4,6 +4,21 @@ import { generatePseudoEmbedding } from '../utils/embedding.js';
 import { mapToEmotion } from '../utils/emotionMap.js';
 import pool from '../config/db.js';
 
+const searchCache = new Map();
+const CACHE_TTL = 1000 * 60 * 60; // 1 hour
+
+function getFromCache(query) {
+  const cached = searchCache.get(query.toLowerCase());
+  if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+    return cached.data;
+  }
+  return null;
+}
+
+function setToCache(query, data) {
+  searchCache.set(query.toLowerCase(), { data, timestamp: Date.now() });
+}
+
 async function getOrCreateEmotion(name) {
   const existing = await pool.query("SELECT id FROM emotion_tags WHERE name = $1", [name]);
   if (existing.rows.length) return existing.rows[0].id;
@@ -21,11 +36,15 @@ export async function processItem(item) {
   const originalLang = item.original_language;
   const genreIds = item.genre_ids || [];
   
-  if (genreIds.includes(10766)) return null; // Filter out Soap operas
-  
   const tLower = title.toLowerCase();
   const descLower = item.overview ? item.overview.toLowerCase() : '';
   if (explicitRegex.test(tLower) || explicitRegex.test(descLower)) return null;
+
+  // Filter out News (10763), Reality (10764), Soap (10766), Talk (10767)
+  if (genreIds.some(id => [10763, 10764, 10766, 10767].includes(id))) return null;
+
+  const tvSerialRegex = /\b(idol|roadies|bigg boss|splitsvilla|khatron ke khiladi|sa re ga ma pa|dance india dance|kapil sharma|masterchef|kbc|kaun banega crorepati|kaisa ye|rangrasiya|kumkum|kyunki|kahaani|kasautii|naagin|yeh rishta|tarak mehta|taarak mehta|cid|savdhaan|crime patrol)\b/i;
+  if (tvSerialRegex.test(tLower)) return null;
 
   const genres = getMovieGenres(genreIds);
   if (genres.length === 0) genres.push('general');
@@ -57,6 +76,9 @@ export async function processItem(item) {
 }
 
 export async function searchMovie(query) {
+  const cachedResult = getFromCache(query);
+  if (cachedResult) return cachedResult;
+
   // STEP 1: LOCAL EXACT SEARCH
   let localMovie = await itemRepository.findByTitleExact(query);
   if (localMovie) {
@@ -64,7 +86,9 @@ export async function searchMovie(query) {
     if (localMovie.embedding) {
       similar = await itemRepository.findSimilarByVector(localMovie.embedding, 10, localMovie.id);
     }
-    return { source: "db", movie: localMovie, similar };
+    const result = { source: "db", movie: localMovie, similar };
+    setToCache(query, result);
+    return result;
   }
 
   // STEP 2: TMDB FALLBACK
@@ -100,7 +124,9 @@ export async function searchMovie(query) {
        if (existingMovie.embedding) {
          similar = await itemRepository.findSimilarByVector(existingMovie.embedding, 10, existingMovie.id);
        }
-       return { source: "db", movie: existingMovie, similar };
+       const result = { source: "db", movie: existingMovie, similar };
+       setToCache(query, result);
+       return result;
     }
 
     // STEP 4: INSERT INTO DB
@@ -126,11 +152,13 @@ export async function searchMovie(query) {
     }
 
     // STEP 7: RETURN RESPONSE WITH VALID IDs
-    return {
+    const result = {
       source: "tmdb",
       movie: insertedMovie,
       similar: dbSimilarMovies
     };
+    setToCache(query, result);
+    return result;
   }
 
   // STEP 8: IF TMDB FAILS, TRY LOCAL PARTIAL MATCH
@@ -140,8 +168,62 @@ export async function searchMovie(query) {
     if (localMovie.embedding) {
       similar = await itemRepository.findSimilarByVector(localMovie.embedding, 10, localMovie.id);
     }
-    return { source: "db", movie: localMovie, similar };
+    const result = { source: "db", movie: localMovie, similar };
+    setToCache(query, result);
+    return result;
   }
 
-  return { message: "No results found" };
+  const result = { message: "No results found" };
+  setToCache(query, result);
+  return result;
+}
+
+export async function searchAndIngest(query, contentType = 'movie') {
+  if (!process.env.TMDB_API_KEY) {
+    console.warn("TMDB_API_KEY missing, skipping dynamic ingest.");
+    return false;
+  }
+
+  const tmdbType = contentType === 'movie' ? 'movie' : 'tv';
+  await initGenres();
+
+  try {
+    const searchData = await fetchTMDB(`/search/${tmdbType}`, { query, page: 1 });
+    if (!searchData || !searchData.results || searchData.results.length === 0) {
+      return false;
+    }
+
+    const topResults = searchData.results.slice(0, 3);
+    let ingestedAny = false;
+
+    for (const result of topResults) {
+      result.media_type = tmdbType;
+      const item = await processItem(result);
+      if (item) {
+        const inserted = await itemRepository.insertMovie(item);
+        if (inserted) ingestedAny = true;
+
+        try {
+          const similarData = await fetchTMDB(`/${tmdbType}/${result.id}/similar`, { page: 1 });
+          if (similarData && similarData.results) {
+            const topSimilar = similarData.results.slice(0, 5);
+            for (const simResult of topSimilar) {
+              simResult.media_type = tmdbType;
+              const simItem = await processItem(simResult);
+              if (simItem) {
+                await itemRepository.insertMovie(simItem);
+              }
+            }
+          }
+        } catch (simErr) {
+          console.warn(`Failed to fetch similar items for ID ${result.id}`);
+        }
+      }
+    }
+    
+    return ingestedAny;
+  } catch (err) {
+    console.error("Error in searchAndIngest:", err);
+    return false;
+  }
 }

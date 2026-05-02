@@ -56,11 +56,11 @@ const login = async (req, res) => {
 
     const token = generateToken(user);
 
-    // ✅ COOKIE CONFIG (Environment specific)
+    // ✅ COOKIE CONFIG (Cross-domain capable)
     res.cookie("token", token, {
       httpOnly: true,
-      secure: isProduction,         // true in prod for HTTPS
-      sameSite: isProduction ? "none" : "lax", // none in prod for cross-domain
+      secure: true,         // Always true for cross-domain HTTPS
+      sameSite: "none",     // Always none for cross-domain requests
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -81,8 +81,8 @@ const login = async (req, res) => {
 const logout = (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? "none" : "lax",
+    secure: true,
+    sameSite: "none",
   });
 
   res.json({ message: "Logged out successfully" });

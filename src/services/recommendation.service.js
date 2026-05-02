@@ -1,5 +1,4 @@
 import db from '../config/db.js';
-import { mapToEmotion } from '../utils/emotionMap.js';
 import { fetchTMDB, langRegionMap, movieGenreMap, initGenres } from '../utils/tmdb.js';
 import { processItem } from './search.service.js';
 import itemRepository from '../repositories/item.repository.js';
@@ -18,6 +17,10 @@ const REGION_LANGUAGE_MAP = {
   kerala: 'malayalam',
   andhra: 'telugu',
 };
+
+// Regex filters for database
+const TV_SERIAL_REGEX = '\\y(idol|roadies|bigg boss|splitsvilla|khatron ke khiladi|sa re ga ma pa|dance india dance|kapil sharma|masterchef|kbc|kaun banega crorepati|kaisa ye|rangrasiya|kumkum|kyunki|kahaani|kasautii|naagin|yeh rishta|tarak mehta|taarak mehta|cid|savdhaan|crime patrol)\\y';
+const EXPLICIT_REGEX = '\\y(sex|porn|porno|hentai|erotica|erotic|adult|lustful|lust|sensual|naked|prostitute|prostitutes|seduction|sexual|sexually|cuckold|perverted|stepdad|stepdaddy|stepmom|impregnates|incest)\\y';
 
 async function dynamicFetch(mood, language, contentType, requiredCount) {
   await initGenres();
@@ -42,7 +45,6 @@ async function dynamicFetch(mood, language, contentType, requiredCount) {
   if (langCode) params.with_original_language = langCode;
   if (genreId) params.with_genres = genreId;
 
-  // We only fetch if there's actually a filter applied to avoid generic excessive fetching
   if (!langCode && !genreId) return;
 
   let insertedCount = 0;
@@ -61,29 +63,33 @@ async function dynamicFetch(mood, language, contentType, requiredCount) {
         insertedCount += itemsToInsert.length;
       }
     }
-    // If TMDB returns no more pages or we hit required count
     if (!res || !res.results || res.results.length === 0) break;
     if (insertedCount >= requiredCount) break;
   }
 }
 
 async function getFallback(topK, mood, language, region) {
-  let query = `SELECT id, title, description, genre, language, region,
+  let query = `
+     SELECT id, title, description, genre, language, region,
             poster_url, backdrop_url, popularity_score, content_type
      FROM items 
      WHERE genre NOT ILIKE '%soap%' 
        AND genre NOT ILIKE '%talk show%' 
        AND genre NOT ILIKE '%reality%' 
-       AND genre NOT ILIKE '%adult%'`;
-  let params = [];
+       AND genre NOT ILIKE '%adult%'
+       AND title !~* $1
+       AND title !~* $2
+       AND description !~* $2
+  `;
+  let params = [TV_SERIAL_REGEX, EXPLICIT_REGEX];
   
   if (language) {
     params.push(language);
-    query += ` AND LOWER(language) = LOWER($${params.length})`;
+    query += ` AND language ILIKE '%' || $${params.length} || '%'`;
   }
   if (region) {
     params.push(region);
-    query += ` AND LOWER(region) = LOWER($${params.length})`;
+    query += ` AND region ILIKE '%' || $${params.length} || '%'`;
   }
   if (mood) {
     if (mood.toLowerCase() === 'sci-fi') {
@@ -100,14 +106,14 @@ async function getFallback(topK, mood, language, region) {
   let result = await db.query(query, params);
   
   if (result.rows.length < 20 && (language || mood)) {
-    // If fallback (global trending for the filter) has less than 20 items, fetch from TMDB
     await dynamicFetch(mood, language, 'movie', 40 - result.rows.length);
     await dynamicFetch(mood, language, 'web_series', 40 - result.rows.length);
-    // Re-run query
     result = await db.query(query, params);
   }
 
-  return result.rows;
+  // Ensure diversity by slightly shuffling fallback based on score range
+  const sorted = result.rows.sort((a, b) => b.popularity_score - a.popularity_score);
+  return sorted;
 }
 
 async function getRecommendations(userId, mood, language, region, contentType = 'movie', topK = 100) {
@@ -130,29 +136,29 @@ async function getRecommendations(userId, mood, language, region, contentType = 
     );
     const userEmbedding = embeddingResult.rows.length > 0 ? embeddingResult.rows[0] : null;
 
-    // 1. FILTERING BEFORE RANKING
-    let queryArgs = [contentType, userId];
+    let queryArgs = [contentType, userId, TV_SERIAL_REGEX, EXPLICIT_REGEX];
     let filterClauses = [
       "i.content_type = $1", 
-      "i.id NOT IN (SELECT item_id FROM interactions WHERE user_id = $2 AND interaction_type = 'watch')"
+      "i.id NOT IN (SELECT item_id FROM interactions WHERE user_id = $2 AND interaction_type = 'watch')",
+      "i.title !~* $3",
+      "i.title !~* $4",
+      "i.description !~* $4",
+      "i.genre NOT ILIKE '%soap%'",
+      "i.genre NOT ILIKE '%talk show%'",
+      "i.genre NOT ILIKE '%reality%'",
+      "i.genre NOT ILIKE '%adult%'"
     ];
-
-    // Exclude soap operas, talk shows, reality, and adult content from recommendations
-    filterClauses.push("i.genre NOT ILIKE '%soap%'");
-    filterClauses.push("i.genre NOT ILIKE '%talk show%'");
-    filterClauses.push("i.genre NOT ILIKE '%reality%'");
-    filterClauses.push("i.genre NOT ILIKE '%adult%'");
 
     let selectSimilarity = ", 0 AS similarity_score";
 
     if (language) {
       queryArgs.push(language);
-      filterClauses.push(`LOWER(i.language) = LOWER($${queryArgs.length})`);
+      filterClauses.push(`i.language ILIKE '%' || $${queryArgs.length} || '%'`);
     }
 
     if (region) {
       queryArgs.push(region);
-      filterClauses.push(`LOWER(i.region) = LOWER($${queryArgs.length})`);
+      filterClauses.push(`i.region ILIKE '%' || $${queryArgs.length} || '%'`);
     }
 
     if (mood) {
@@ -164,15 +170,13 @@ async function getRecommendations(userId, mood, language, region, contentType = 
       }
     }
 
-    let orderClause = `ORDER BY i.popularity_score DESC NULLS LAST LIMIT 500`;
+    let orderClause = `ORDER BY i.popularity_score DESC NULLS LAST LIMIT 300`;
 
     if (userEmbedding && userEmbedding.embedding) {
       queryArgs.push(userEmbedding.embedding);
       const userVecParamIdx = queryArgs.length;
-      // Using <=> for cosine distance. Similarity is 1 - distance.
       selectSimilarity = `, (1 - (i.embedding <=> $${userVecParamIdx}::vector)) AS similarity_score`;
-      
-      orderClause = `ORDER BY i.embedding <=> $${userVecParamIdx}::vector LIMIT 500`;
+      orderClause = `ORDER BY i.embedding <=> $${userVecParamIdx}::vector LIMIT 300`;
     }
 
     const finalQuery = `
@@ -191,17 +195,16 @@ async function getRecommendations(userId, mood, language, region, contentType = 
 
     if (candidates.length < 20 && (language || mood)) {
       await dynamicFetch(mood, language, contentType, 40 - candidates.length);
-      // Re-run query after dynamic ingestion
       candidatesResult = await db.query(finalQuery, queryArgs);
       candidates = candidatesResult.rows;
     }
 
-    // 2. INTERACTIONS (User History for Emotion Matching)
+    // 2. INTERACTIONS
     const interactionsResult = await db.query(`
       SELECT i.created_at, COALESCE(i.score, 0) as score, it.genre, it.emotion_tag_id
       FROM interactions i
       JOIN items it ON i.item_id = it.id
-      WHERE i.user_id = $1 AND i.interaction_type = 'watch'
+      WHERE i.user_id = $1 AND i.interaction_type IN ('watch', 'like')
     `, [userId]);
 
     const interactions = interactionsResult.rows;
@@ -223,7 +226,6 @@ async function getRecommendations(userId, mood, language, region, contentType = 
       }
     }
 
-    // Normalize emotion scores
     if (maxEmotionScore > 0) {
       for (const k in implicitEmotionMap) {
         implicitEmotionMap[k] = implicitEmotionMap[k] / maxEmotionScore;
@@ -236,6 +238,7 @@ async function getRecommendations(userId, mood, language, region, contentType = 
     const isWeekend = (day === 0 || day === 6);
     
     const scoredItems = [];
+    const maxPopScore = candidates.reduce((max, i) => Math.max(max, i.popularity_score || 0), 10); // Find max popularity dynamically to normalize
 
     // Weights setup (Total 1.0)
     const W1 = 0.25; // Popularity
@@ -246,13 +249,14 @@ async function getRecommendations(userId, mood, language, region, contentType = 
 
     for (const item of candidates) {
       // 1. POPULARITY (w1)
-      const popularity = Math.min(parseFloat(item.popularity_score || 0) / 10.0, 1.0);
+      const popularity = Math.min((parseFloat(item.popularity_score || 0) / maxPopScore), 1.0);
 
-      // 2. SIMILARITY (w2) - Pre-calculated from PGVector
-      const similarity = Math.max(0, parseFloat(item.similarity_score) || 0);
+      // 2. SIMILARITY (w2)
+      let similarity = Math.max(0, parseFloat(item.similarity_score) || 0);
+      if (!userEmbedding) similarity = 0.5; // neutral if no history
 
       // 3. EMOTION (w3)
-      let emotion_score = 0;
+      let emotion_score = 0.1; // Baseline
       if (item.emotion_tag_id && implicitEmotionMap[item.emotion_tag_id]) {
         emotion_score = implicitEmotionMap[item.emotion_tag_id];
       }
@@ -265,38 +269,36 @@ async function getRecommendations(userId, mood, language, region, contentType = 
       const targetRegion = region?.toLowerCase() || userLoc;
       const targetLang = language?.toLowerCase() || userPrefLang;
 
-      if (targetRegion && iReg === targetRegion) {
+      if (targetRegion && iReg && iReg.includes(targetRegion)) {
         regional_score += 0.6;
-      } else if (targetLang && iLang === targetLang) {
+      } else if (targetLang && iLang && iLang.includes(targetLang)) {
         regional_score += 0.4;
       } else if (targetRegion) {
         const mappedLang = REGION_LANGUAGE_MAP[targetRegion];
-        if (mappedLang && iLang === mappedLang) {
+        if (mappedLang && iLang && iLang.includes(mappedLang)) {
           regional_score += 0.3;
         }
       }
       regional_score = Math.min(regional_score, 1.0);
 
       // 5. TIME CONTEXT (w5)
-      let time_score = 0;
+      let time_score = 0.5; // Baseline
       if (item.genre) {
         const itemGenres = item.genre.split(',').map(g => g.trim().toLowerCase());
         let isLight = itemGenres.includes('comedy') || itemGenres.includes('family') || itemGenres.includes('animation');
-        let isHeavy = itemGenres.includes('thriller') || itemGenres.includes('horror') || itemGenres.includes('crime');
+        let isHeavy = itemGenres.includes('thriller') || itemGenres.includes('horror') || itemGenres.includes('crime') || itemGenres.includes('mystery');
         
         if (currentBucket === 'morning' && isLight) time_score = 1.0;
         else if (currentBucket === 'night' && isHeavy) time_score = 1.0;
-        else time_score = 0.5;
       }
       
       if (isWeekend) {
         const itemGenres = item.genre ? item.genre.split(',').map(g => g.trim().toLowerCase()) : [];
         if (itemGenres.includes('action') || itemGenres.includes('adventure') || itemGenres.includes('sci-fi')) {
-          time_score = Math.min(time_score + 0.3, 1.0);
+          time_score = Math.min(time_score + 0.5, 1.0);
         }
       }
 
-      // FINAL HYBRID CALCULATION
       const finalScore = (W1 * popularity) + 
                          (W2 * similarity) + 
                          (W3 * emotion_score) + 
@@ -305,17 +307,28 @@ async function getRecommendations(userId, mood, language, region, contentType = 
 
       scoredItems.push({
         ...item,
-        match_percentage: Math.round(finalScore * 100), // Normalize roughly
+        match_percentage: Math.round(finalScore * 100),
         finalScore,
         debug_scores: { popularity, similarity, emotion_score, regional_score, time_score }
       });
     }
 
     scoredItems.sort((a, b) => b.finalScore - a.finalScore);
-    return scoredItems.slice(0, topK);
+
+    // Filter duplicates
+    const uniqueItems = [];
+    const seenIds = new Set();
+    for (const item of scoredItems) {
+      if (!seenIds.has(item.id)) {
+        uniqueItems.push(item);
+        seenIds.add(item.id);
+      }
+    }
+
+    return uniqueItems.slice(0, topK);
   } catch (err) {
     console.error('Recommendation Engine Error:', err);
-    return await getFallback(topK);
+    return await getFallback(topK, mood, language, region);
   }
 }
 
@@ -324,19 +337,18 @@ async function getDashboardRecommendations(userId, mood, language, region) {
     const [movieRecs, tvRecs, trendData] = await Promise.all([
       getRecommendations(userId, mood, language, region, 'movie', 300),
       getRecommendations(userId, mood, language, region, 'web_series', 200),
-      getFallback(100, mood, language, region)
+      getFallback(200, mood, language, region)
     ]);
 
     const allRecs = [...movieRecs, ...tvRecs].sort((a, b) => (b.finalScore || 0) - (a.finalScore || 0));
 
-    // Removed usedIds so the same limited movies can populate multiple applicable rows instead of vanishing
+    const globalSeen = new Set();
     const getUnique = (arr, limit) => {
       const res = [];
-      const seen = new Set();
       for (const item of arr) {
-        if (!seen.has(item.id)) {
+        if (!globalSeen.has(item.id)) {
           res.push(item);
-          seen.add(item.id);
+          globalSeen.add(item.id);
         }
         if (res.length >= limit) break;
       }
@@ -346,55 +358,39 @@ async function getDashboardRecommendations(userId, mood, language, region) {
     const getMovies = (arr) => arr.filter(m => m.content_type === 'movie');
     const getWebSeries = (arr) => arr.filter(m => m.content_type === 'web_series');
 
-    let sim = allRecs.filter(m => m.debug_scores && m.debug_scores.similarity > 0.1);
-    let reg = allRecs.filter(m => m.debug_scores && m.debug_scores.regional_score > 0);
-    let tim = allRecs.filter(m => m.debug_scores && m.debug_scores.time_score > 0);
-    let moo = allRecs.filter(m => m.debug_scores && m.debug_scores.emotion_score > 0.1);
-    const india = allRecs.filter(m => m.region?.toLowerCase() === 'india' || m.language?.toLowerCase() === 'hindi');
+    let sim = allRecs.filter(m => m.debug_scores && m.debug_scores.similarity > 0.4);
+    let reg = allRecs.filter(m => m.debug_scores && m.debug_scores.regional_score > 0.3);
+    let tim = allRecs.filter(m => m.debug_scores && m.debug_scores.time_score > 0.6);
+    let moo = allRecs.filter(m => m.debug_scores && m.debug_scores.emotion_score > 0.5);
+    const india = allRecs.filter(m => m.region?.toLowerCase().includes('india') || m.language?.toLowerCase() === 'hindi');
 
     const heroMovie = allRecs.length > 0 ? allRecs[0] : (trendData[0] || null);
+    if (heroMovie) globalSeen.add(heroMovie.id);
 
-    const similarityMovies = getUnique(getMovies(sim), 50);
-    const similarityWebSeries = getUnique(getWebSeries(sim), 50);
-
-    const regionMovies = getUnique(getMovies(reg), 50);
-    const regionWebSeries = getUnique(getWebSeries(reg), 50);
-
-    const timeMovies = getUnique(getMovies(tim), 50);
-    const timeWebSeries = getUnique(getWebSeries(tim), 50);
-
-    const moodMovies = getUnique(getMovies(moo), 50);
-    const moodWebSeries = getUnique(getWebSeries(moo), 50);
-
-    const indiaMovies = getUnique(getMovies(india), 50);
-    const indiaWebSeries = getUnique(getWebSeries(india), 50);
-
-    const popularMovies = getUnique(getMovies(trendData), 50);
-    const popularWebSeries = getUnique(getWebSeries(trendData), 50);
-
-    const moviesList = getUnique(getMovies(allRecs), 50);
-    const tvList = getUnique(getWebSeries(allRecs), 50);
+    // Shuffle the lists slightly to ensure freshness between loads
+    const shuffle = (array) => array.sort(() => Math.random() - 0.5);
 
     return {
       heroMovie,
-      similarityMovies,
-      similarityWebSeries,
-      regionMovies,
-      regionWebSeries,
-      timeMovies,
-      timeWebSeries,
-      moodMovies,
-      moodWebSeries,
-      indiaMovies,
-      indiaWebSeries,
-      movieRecs: moviesList,
-      tvRecs: tvList,
-      popularMovies,
-      popularWebSeries
+      similarityMovies: getUnique(getMovies(sim), 30),
+      similarityWebSeries: getUnique(getWebSeries(sim), 30),
+      regionMovies: getUnique(getMovies(reg), 30),
+      regionWebSeries: getUnique(getWebSeries(reg), 30),
+      timeMovies: getUnique(getMovies(tim), 30),
+      timeWebSeries: getUnique(getWebSeries(tim), 30),
+      moodMovies: getUnique(getMovies(moo), 30),
+      moodWebSeries: getUnique(getWebSeries(moo), 30),
+      indiaMovies: getUnique(getMovies(india), 30),
+      indiaWebSeries: getUnique(getWebSeries(india), 30),
+      movieRecs: getUnique(getMovies(allRecs), 50),
+      tvRecs: getUnique(getWebSeries(allRecs), 50),
+      popularMovies: getUnique(getMovies(trendData), 50),
+      popularWebSeries: getUnique(getWebSeries(trendData), 50)
     };
   } catch (err) {
     console.error("Dashboard Rec Error:", err);
-    return { popularPicks: await getFallback(20) };
+    const fallback = await getFallback(100, mood, language, region);
+    return { popularPicks: fallback };
   }
 }
 
