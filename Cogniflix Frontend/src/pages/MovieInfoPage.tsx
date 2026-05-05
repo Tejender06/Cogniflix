@@ -40,6 +40,8 @@ export default function MovieInfoPage() {
 
   useEffect(() => {
     if (!id) return;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
     const loadData = async () => {
       try {
         setLoading(true);
@@ -48,7 +50,7 @@ export default function MovieInfoPage() {
           fetchSimilarMovies(id),
           fetchSavedMovies()
         ]);
-        setMovie(movieData);
+        setMovie(prev => ({ ...movieData, match_percentage: prev?.match_percentage || passedMovie?.match_percentage }));
         setSimilarMovies(similarData);
         
         // Reset interaction states when movie changes
@@ -176,7 +178,7 @@ export default function MovieInfoPage() {
           <h1 className="movie-title">{movie.title}</h1>
           
           <div className="movie-meta">
-            <span className="match-score">{movie.popularity_score ? Math.round(movie.popularity_score * 10) : 85}% Match</span>
+            <span className="match-score">{movie.match_percentage || 85}% Match</span>
             <span className="age-rating">U/A 13+</span>
             <span className="duration">2h 15m</span>
             <span className="quality-badge">HD</span>

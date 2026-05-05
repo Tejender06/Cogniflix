@@ -204,7 +204,7 @@ async function getRecommendations(userId, mood, language, region, contentType = 
       SELECT i.created_at, COALESCE(i.score, 0) as score, it.genre, it.emotion_tag_id
       FROM interactions i
       JOIN items it ON i.item_id = it.id
-      WHERE i.user_id = $1 AND i.interaction_type IN ('watch', 'like')
+      WHERE i.user_id = $1 AND i.interaction_type IN ('watch', 'like', 'rate')
     `, [userId]);
 
     const interactions = interactionsResult.rows;
