@@ -37,7 +37,7 @@ export default function LoginPage() {
         const res = await api.get("/api/auth/me");
         login(res.data.user);
         navigate("/dashboard", { replace: true });
-      } catch (error) {
+      } catch {
         localStorage.removeItem("token");
         setIsVerifying(false);
       }

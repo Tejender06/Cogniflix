@@ -25,7 +25,7 @@ export default function ProtectedRoute() {
       try {
         await api.get("/api/auth/me");
         setIsAuthenticated(true);
-      } catch (error) {
+      } catch {
         localStorage.removeItem("token");
         setIsAuthenticated(false);
       } finally {

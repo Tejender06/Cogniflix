@@ -32,7 +32,6 @@ app.use(express.json());
 app.use(cookieParser());
 
 const allowedOrigins = [
-  "https://main.d3jept18eiu0aq.amplifyapp.com",
   "https://main.d3pelnl55s3qgs.amplifyapp.com",
   "http://localhost:3000",
   "http://localhost:5173",
