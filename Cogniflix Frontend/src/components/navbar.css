@@ -1,0 +1,205 @@
+.navbar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 70px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  padding: 0 4%;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.9) 10%, rgba(0,0,0,0));
+  transition: background-color 0.4s ease;
+  box-sizing: border-box;
+}
+
+.navbar.scrolled {
+  background-color: #141414;
+}
+
+.navbar-main {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.navbar .logo {
+  color: #e50914;
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.navbar-links {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  gap: 20px;
+}
+
+.navbar-links li {
+  color: #e5e5e5;
+  font-size: 0.85rem;
+  transition: color 0.4s;
+  cursor: pointer;
+}
+
+.navbar-links li:hover,
+.navbar-links li.active {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.navbar-filters {
+  display: flex;
+  gap: 15px;
+}
+
+.netflix-select {
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.3s, background 0.3s;
+}
+
+.netflix-select:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.navbar-search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 8px;
+  color: white;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.7;
+  transition: opacity 0.4s ease;
+}
+
+.navbar-search-container:hover .search-icon,
+.navbar-search.active ~ .search-icon,
+.navbar-search:focus ~ .search-icon {
+  opacity: 1;
+}
+
+.navbar-search {
+  background-color: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 6px 12px 6px 35px;
+  width: 0;
+  opacity: 0;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease, background-color 0.3s;
+  outline: none;
+  font-size: 0.85rem;
+}
+
+.navbar-search-container:hover .navbar-search,
+.navbar-search.active,
+.navbar-search:focus {
+  width: 250px;
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.9);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.search-dropdown {
+  position: absolute;
+  top: 45px;
+  right: 0;
+  background-color: #141414;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 320px;
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 2000;
+}
+
+.search-dropdown::-webkit-scrollbar {
+  display: none;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border-bottom: 1px solid #333;
+}
+
+.search-result-item:hover {
+  background-color: #333;
+}
+
+.search-result-item img {
+  width: 40px;
+  height: 60px;
+  object-fit: cover;
+  margin-right: 15px;
+  border-radius: 2px;
+}
+
+.search-result-item span {
+  color: #fff;
+  font-size: 0.85rem;
+}
+
+.profile-menu {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.profile-name {
+  font-size: 0.85rem;
+  color: #fff;
+}
+
+.logout-icon {
+  color: #b3b3b3;
+  transition: color 0.3s;
+}
+
+.profile-menu:hover .logout-icon {
+  color: #fff;
+}
+
+@media (max-width: 900px) {
+  .navbar-links, .profile-name, .navbar-filters {
+    display: none;
+  }
+}

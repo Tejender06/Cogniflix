@@ -1,0 +1,205 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+body {
+  margin: 0;
+  font-family: "Inter", sans-serif;
+  overflow: visible;
+}
+
+/* BACKGROUND */
+.container {
+  position: relative;
+  display: flex;
+  min-height: 100vh;
+  color: white;
+  background: url("https://images.unsplash.com/photo-1524985069026-dd778a71c7b4")
+    center/cover no-repeat;
+}
+
+/* DARK CINEMATIC OVERLAY */
+.bgOverlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(0, 0, 0, 0.5), #000 90%);
+  backdrop-filter: blur(6px);
+}
+
+/* LEFT */
+.left {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+}
+
+/* CARD */
+.card {
+  width: 420px;
+  padding: 44px;
+  border-radius: 22px;
+
+  background: rgba(10, 15, 30, 0.65);
+  backdrop-filter: blur(40px);
+
+  border: 1px solid rgba(255, 255, 255, 0.06);
+
+  box-shadow:
+    0 0 120px rgba(0, 0, 0, 0.9),
+    inset 0 0 30px rgba(255, 255, 255, 0.02);
+
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* LOGO */
+.logo {
+  text-align: center;
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+/* SUBTITLE */
+.subtitle {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+/* INPUT */
+.inputBox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  background: #020617;
+  border: 1px solid #1e293b;
+
+  padding: 14px;
+  border-radius: 12px;
+
+  transition: 0.2s;
+}
+
+.inputBox:hover {
+  border-color: #334155;
+}
+
+.inputBox:focus-within {
+  border: 1px solid #e50914;
+  box-shadow: 0 0 15px rgba(229, 9, 20, 0.4);
+}
+
+.inputBox input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: white;
+}
+
+.eye {
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+/* ROW */
+.row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.remember {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.link {
+  cursor: pointer;
+}
+
+/* BUTTON */
+.loginBtn {
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+
+  background: linear-gradient(90deg, #e50914, #ff1e2d);
+  color: white;
+  font-weight: 600;
+
+  box-shadow: 0 15px 35px rgba(229, 9, 20, 0.5);
+
+  cursor: pointer;
+}
+
+/* DIVIDER */
+.divider {
+  text-align: center;
+  color: #64748b;
+}
+
+/* OAUTH */
+.oauthBtn {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #1e293b;
+  background: transparent;
+  color: white;
+  cursor: pointer;
+}
+
+.oauthBtn:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* SIGNUP */
+.signup {
+  text-align: center;
+}
+
+.signup span {
+  color: #e50914;
+  cursor: pointer;
+}
+
+/* RIGHT */
+.right {
+  flex: 1;
+  padding: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 28px;
+  z-index: 2;
+}
+
+.right h2 {
+  font-size: 32px;
+}
+
+.rightSub {
+  color: #94a3b8;
+}
+
+/* FEATURES */
+.feature {
+  padding: 22px;
+  border-radius: 16px;
+
+  background: rgba(255, 255, 255, 0.05);
+
+  border: 1px solid rgba(255, 255, 255, 0.06);
+
+  transition: 0.3s;
+}
+
+.feature:hover {
+  transform: translateY(-3px);
+  background: rgba(255, 255, 255, 0.08);
+}

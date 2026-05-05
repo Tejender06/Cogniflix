@@ -1,0 +1,65 @@
+.mrow {
+  margin: 3vw 0;
+  padding: 0 4%;
+}
+
+.mrow__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 15px;
+}
+
+.mrow__title {
+  font-size: 1.4vw;
+  color: #e5e5e5;
+  font-weight: 700;
+  margin: 0;
+  text-transform: capitalize;
+}
+
+@media screen and (max-width: 800px) {
+  .mrow__title {
+    font-size: 1.2rem;
+  }
+}
+
+.mrow__see-all {
+  background: none;
+  border: none;
+  color: #54b9c5;
+  font-size: 0.9vw;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.mrow:hover .mrow__see-all {
+  opacity: 1;
+}
+
+.mrow__track-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.mrow__track {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  padding: 40px 0 100px 0;
+  scroll-snap-type: x mandatory;
+  will-change: scroll-position;
+}
+
+.mrow__track::-webkit-scrollbar {
+  display: none;
+}
+
