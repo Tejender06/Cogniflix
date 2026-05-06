@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchMovies, fetchTrendingMovies, fetchRecommendations } from "../services/movieService";
+import { useMovieContext } from "../context/MovieContext";
 import type { Movie } from "../services/movieService";
 import HeroBanner from "../components/HeroBanner";
 import MovieRow from "../components/MovieRow";
@@ -16,6 +17,7 @@ export default function MoviesPage() {
   const [horror, setHorror] = useState<Movie[]>([]);
   const [romance, setRomance] = useState<Movie[]>([]);
   const [recommendations, setRecommendations] = useState<Movie[]>([]);
+  const { mood, emotion, language, region } = useMovieContext();
   
   const [loading, setLoading] = useState(true);
 
@@ -35,7 +37,7 @@ export default function MoviesPage() {
         ] = await Promise.all([
           fetchTrendingMovies().catch(() => []),
           fetchMovies(undefined, undefined, 1, 20, 'recent').catch(() => ({ data: [] })),
-          fetchRecommendations(undefined, undefined, undefined, 'movie').catch(() => []),
+          fetchRecommendations(mood, language, region, 'movie', emotion).catch(() => []),
           fetchMovies('action', undefined, 1, 20).catch(() => ({ data: [] })),
           fetchMovies('comedy', undefined, 1, 20).catch(() => ({ data: [] })),
           fetchMovies('sci-fi', undefined, 1, 20).catch(() => ({ data: [] })),
@@ -64,7 +66,7 @@ export default function MoviesPage() {
       }
     };
     loadData();
-  }, []);
+  }, [mood, emotion, language, region]);
 
   if (loading) {
     return (

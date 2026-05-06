@@ -19,7 +19,7 @@ import * as recommendationService from '../services/recommendation.service.js';
 const getRecommendations = async (req, res) => {
   try {
     const userId = req.user?.id || req.query.user_id;
-    let { mood, language, region, content_type } = req.query;
+    let { mood, language, region, content_type, emotion } = req.query;
 
     if (mood?.toLowerCase() === 'all') mood = null;
     if (language?.toLowerCase() === 'all') language = null;
@@ -31,7 +31,7 @@ const getRecommendations = async (req, res) => {
       });
     }
 
-    const results = await recommendationService.getRecommendations(userId, mood, language, region, content_type);
+    const results = await recommendationService.getRecommendations(userId, mood, language, region, content_type, emotion);
 
     if (!Array.isArray(results)) {
       return res.status(200).json({
@@ -58,7 +58,7 @@ const getRecommendations = async (req, res) => {
 const getDashboard = async (req, res) => {
   try {
     const userId = req.user?.id || req.query.user_id;
-    let { mood, language, region } = req.query;
+    let { mood, language, region, emotion } = req.query;
 
     if (mood?.toLowerCase() === 'all') mood = null;
     if (language?.toLowerCase() === 'all') language = null;
@@ -68,7 +68,7 @@ const getDashboard = async (req, res) => {
       return res.status(400).json({ error: 'user_id is required' });
     }
 
-    const dashboardData = await recommendationService.getDashboardRecommendations(userId, mood, language, region);
+    const dashboardData = await recommendationService.getDashboardRecommendations(userId, mood, language, region, emotion);
 
     return res.status(200).json({
       user_id: userId,

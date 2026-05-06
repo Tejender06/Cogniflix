@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchWebSeries, fetchRecommendations } from "../services/movieService";
+import { useMovieContext } from "../context/MovieContext";
 import type { Movie } from "../services/movieService";
 import HeroBanner from "../components/HeroBanner";
 import MovieRow from "../components/MovieRow";
@@ -15,6 +16,7 @@ export default function WebSeriesPage() {
   const [sciFi, setSciFi] = useState<Movie[]>([]);
   const [drama, setDrama] = useState<Movie[]>([]);
   const [recommendations, setRecommendations] = useState<Movie[]>([]);
+  const { mood, emotion, language, region } = useMovieContext();
   
   const [loading, setLoading] = useState(true);
 
@@ -33,7 +35,7 @@ export default function WebSeriesPage() {
         ] = await Promise.all([
           fetchWebSeries(undefined, undefined, 1, 20).catch(() => ({ data: [] })),
           fetchWebSeries(undefined, undefined, 1, 20, 'recent').catch(() => ({ data: [] })),
-          fetchRecommendations(undefined, undefined, undefined, 'web_series').catch(() => []),
+          fetchRecommendations(mood, language, region, 'web_series', emotion).catch(() => []),
           fetchWebSeries('action', undefined, 1, 20).catch(() => ({ data: [] })),
           fetchWebSeries('comedy', undefined, 1, 20).catch(() => ({ data: [] })),
           fetchWebSeries('sci-fi', undefined, 1, 20).catch(() => ({ data: [] })),
@@ -60,7 +62,7 @@ export default function WebSeriesPage() {
       }
     };
     loadData();
-  }, []);
+  }, [mood, emotion, language, region]);
 
   if (loading) {
     return (

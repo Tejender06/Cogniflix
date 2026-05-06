@@ -44,7 +44,7 @@ export default function DashboardPage() {
   
   const [loading, setLoading] = useState(true);
   
-  const { heroMovie, setHeroMovie, mood, language, region } = useMovieContext();
+  const { heroMovie, setHeroMovie, mood, emotion, language, region } = useMovieContext();
 
   const [movieRecs, setMovieRecs] = useState<Movie[]>([]);
   const [tvRecs, setTvRecs] = useState<Movie[]>([]);
@@ -53,7 +53,7 @@ export default function DashboardPage() {
     const loadData = async () => {
       try {
         const [dashboardData, histData] = await Promise.all([
-          fetchDashboardRecommendations(mood, language, region),
+          fetchDashboardRecommendations(mood, language, region, emotion),
           fetchHistory()
         ]);
 
@@ -88,7 +88,7 @@ export default function DashboardPage() {
     };
 
     loadData();
-  }, [mood, language, region, setHeroMovie]); 
+  }, [mood, emotion, language, region, setHeroMovie]); 
 
   if (loading) {
     return (

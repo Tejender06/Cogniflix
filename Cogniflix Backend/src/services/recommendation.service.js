@@ -116,7 +116,7 @@ async function getFallback(topK, mood, language, region) {
   return sorted;
 }
 
-async function getRecommendations(userId, mood, language, region, contentType = 'movie', topK = 100) {
+async function getRecommendations(userId, mood, language, region, contentType = 'movie', emotion = null, topK = 100) {
   try {
     const userResult = await db.query(
       `SELECT id, preferred_language, location FROM users WHERE id = $1`,
@@ -168,6 +168,11 @@ async function getRecommendations(userId, mood, language, region, contentType = 
         queryArgs.push(mood);
         filterClauses.push(`i.genre ILIKE '%' || $${queryArgs.length} || '%'`);
       }
+    }
+
+    if (emotion) {
+      queryArgs.push(emotion);
+      filterClauses.push(`i.emotion_tag_id IN (SELECT id FROM emotion_tags WHERE name ILIKE '%' || $${queryArgs.length} || '%')`);
     }
 
     let orderClause = `ORDER BY i.popularity_score DESC NULLS LAST LIMIT 600`;
@@ -332,11 +337,11 @@ async function getRecommendations(userId, mood, language, region, contentType = 
   }
 }
 
-async function getDashboardRecommendations(userId, mood, language, region) {
+async function getDashboardRecommendations(userId, mood, language, region, emotion = null) {
   try {
     const [movieRecs, tvRecs, trendData] = await Promise.all([
-      getRecommendations(userId, mood, language, region, 'movie', 300),
-      getRecommendations(userId, mood, language, region, 'web_series', 200),
+      getRecommendations(userId, mood, language, region, 'movie', emotion, 300),
+      getRecommendations(userId, mood, language, region, 'web_series', emotion, 200),
       getFallback(200, mood, language, region)
     ]);
 

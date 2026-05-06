@@ -72,12 +72,13 @@ export const fetchTrendingMovies = async (): Promise<Movie[]> => {
   return res.data.movies;
 };
 
-export const fetchRecommendations = async (mood?: string, language?: string, region?: string, content_type?: string): Promise<Movie[]> => {
+export const fetchRecommendations = async (mood?: string, language?: string, region?: string, content_type?: string, emotion?: string): Promise<Movie[]> => {
   const params: Record<string, string> = {};
   if (mood) params.mood = mood;
   if (language) params.language = language;
   if (region) params.region = region;
   if (content_type) params.content_type = content_type;
+  if (emotion) params.emotion = emotion;
   const res = await api.get<{data: Movie[]}>("/api/recommendations", { params });
   return res.data.data;
 };
@@ -100,11 +101,12 @@ export interface DashboardData {
   tvRecs?: Movie[];
 }
 
-export const fetchDashboardRecommendations = async (mood?: string, language?: string, region?: string): Promise<DashboardData> => {
+export const fetchDashboardRecommendations = async (mood?: string, language?: string, region?: string, emotion?: string): Promise<DashboardData> => {
   const params: Record<string, string> = {};
   if (mood) params.mood = mood;
   if (language) params.language = language;
   if (region) params.region = region;
+  if (emotion) params.emotion = emotion;
   const res = await api.get<{data: DashboardData}>("/api/recommendations/dashboard", { params });
   return res.data.data;
 };

@@ -44,7 +44,7 @@ export default function Navbar() {
   };
 
   const isActive = (path: string) => location.pathname === path;
-  const { mood, setMood, language, setLanguage, region, setRegion } = useMovieContext();
+  const { mood, setMood, emotion, setEmotion, language, setLanguage, region, setRegion } = useMovieContext();
 
   return (
     <header className={`navbar ${isScrolled ? "scrolled" : ""}`}>
@@ -68,6 +68,16 @@ export default function Navbar() {
             >
               <option value="">Genres</option>
               {['Action', 'Adventure', 'Comedy', 'Drama', 'Horror', 'Romance', 'Sci-Fi', 'Thriller'].map(m => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+            <select 
+              value={emotion} 
+              onChange={(e) => setEmotion(e.target.value)}
+              className="netflix-select"
+            >
+              <option value="">Mood</option>
+              {['Happy', 'Dark', 'Intense', 'Romantic', 'Fear', 'Curious', 'Emotional', 'Exciting', 'Mind-Bending', 'Calm'].map(m => (
                 <option key={m} value={m}>{m}</option>
               ))}
             </select>
