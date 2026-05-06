@@ -21,7 +21,7 @@ import jwt from 'jsonwebtoken';
 
 const isProduction = process.env.NODE_ENV === "production";
 
-// ================= REGISTER =================
+// Handle new user registration
 const register = async (req, res) => {
   try {
     const { name, email, password, preferred_language = 'en', location = 'Global' } = req.body;
@@ -48,7 +48,7 @@ const register = async (req, res) => {
   }
 };
 
-// ================= LOGIN =================
+// Authenticate user and issue JWT token
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -72,7 +72,7 @@ const login = async (req, res) => {
 
     const token = generateToken(user);
 
-    // ✅ COOKIE CONFIG (Cross-domain capable)
+    // Set cross-domain compatible authentication cookie
     res.cookie("token", token, {
       httpOnly: true,
       secure: true,         // Always true for cross-domain HTTPS
@@ -93,7 +93,7 @@ const login = async (req, res) => {
   }
 };
 
-// ================= LOGOUT =================
+// Clear authentication cookie to log out user
 const logout = (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
@@ -104,7 +104,7 @@ const logout = (req, res) => {
   res.json({ message: "Logged out successfully" });
 };
 
-// ================= GET CURRENT USER =================
+// Retrieve and verify the currently authenticated user
 const getCurrentUser = (req, res) => {
   try {
     const token = req.cookies?.token;

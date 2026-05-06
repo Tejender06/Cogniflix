@@ -36,7 +36,7 @@ async function handleInteraction({ user_id, content_id, interaction_type, score:
 
   const score = interaction_type === 'rate' ? passedScore : scoreMap[interaction_type];
 
-  // 🔥 FIX: map content_id → item_id
+  // Map content_id to item_id for the database structure
   const result = await interactionRepository.addInteraction({
     user_id,
     item_id: content_id,

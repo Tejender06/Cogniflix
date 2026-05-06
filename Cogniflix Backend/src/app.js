@@ -52,7 +52,7 @@ app.use(
   })
 );
 
-// ✅ unified API structure
+// Mount route handlers with unified API prefix
 app.use("/api/auth", authRoutes);
 app.use("/api/interactions", interactionRoutes);
 app.use("/api/movies", movieRoutes);

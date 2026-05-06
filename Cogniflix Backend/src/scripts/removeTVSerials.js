@@ -17,7 +17,7 @@ PostgreSQL Database
 import pool from '../config/db.js';
 
 async function removeTVSerials() {
-  console.log("🧹 Removing remaining TV serials, reality shows, and explicit content...");
+  console.log("Removing remaining TV serials, reality shows, and explicit content...");
   
   const deleteQuery = `
     DELETE FROM items 
@@ -34,9 +34,9 @@ async function removeTVSerials() {
   
   try {
     const res = await pool.query(deleteQuery);
-    console.log(`🗑️ Deleted ${res.rowCount} inappropriate or low-quality items.`);
+    console.log(`Deleted ${res.rowCount} inappropriate or low-quality items.`);
   } catch (err) {
-    console.error("❌ Error deleting items:", err.message);
+    console.error("Error deleting items:", err.message);
   } finally {
     pool.end();
   }
