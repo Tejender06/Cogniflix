@@ -12,6 +12,7 @@ export type Movie = {
   emotion_name?: string;
   region?: string;
   match_percentage?: number;
+  content_type?: string;
   debug_scores?: Record<string, unknown>;
 };
 
