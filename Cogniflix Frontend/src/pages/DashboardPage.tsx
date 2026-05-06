@@ -117,29 +117,30 @@ export default function DashboardPage() {
       {defaultMovie && <HeroBanner movie={defaultMovie} />}
 
       <div className="dashboard-content">
+        {/* 1. Continue Watching */}
         {history.length > 0 && <MovieRow title="Continue Watching" movies={history} />}
         
-        {popularMovies.length > 0 && <MovieRow title="Global Trending Movies" movies={popularMovies} />}
-        {popularWebSeries.length > 0 && <MovieRow title="Global Trending Web Series" movies={popularWebSeries} />}
-        
-        {indiaMovies.length > 0 && <MovieRow title="Trending Movies in India" movies={indiaMovies} />}
-        {indiaWebSeries.length > 0 && <MovieRow title="Trending Web Series in India" movies={indiaWebSeries} />}
-
-        {region.length > 0 && regionMovies.length > 0 && (
-          <MovieRow title={`Top Movies for ${regionName}`} movies={regionMovies} />
-        )}
-        {region.length > 0 && regionWebSeries.length > 0 && (
-          <MovieRow title={`Top Web Series for ${regionName}`} movies={regionWebSeries} />
-        )}
-
+        {/* 2. Recommendations */}
+        {movieRecs.length > 0 && <MovieRow title={emotion.length > 0 && mood.length > 0 ? `Top ${emotion.join(', ')} ${mood.join(', ')} Movies For You` : emotion.length > 0 ? `Top ${emotion.join(', ')} Movies For You` : mood.length > 0 ? `Top ${mood.join(', ')} Movies For You` : "Recommended Movies"} movies={movieRecs} exploreUrl="/movies" />}
+        {tvRecs.length > 0 && <MovieRow title={emotion.length > 0 && mood.length > 0 ? `Top ${emotion.join(', ')} ${mood.join(', ')} Web Series For You` : emotion.length > 0 ? `Top ${emotion.join(', ')} Web Series For You` : mood.length > 0 ? `Top ${mood.join(', ')} Web Series For You` : "Recommended Web Series"} movies={tvRecs} exploreUrl="/tv" />}
+        {similarityMovies.length > 0 && <MovieRow title="Because You Watched (Movies)" movies={similarityMovies} />}
+        {similarityWebSeries.length > 0 && <MovieRow title="Because You Watched (Web Series)" movies={similarityWebSeries} />}
         {moodMovies.length > 0 && <MovieRow title={mood.length > 0 ? `${mood.join(', ')} Movies` : "Top Genre Movies"} movies={moodMovies} />}
         {moodWebSeries.length > 0 && <MovieRow title={mood.length > 0 ? `${mood.join(', ')} Web Series` : "Top Genre Web Series"} movies={moodWebSeries} />}
         
-        {movieRecs.length > 0 && <MovieRow title={emotion.length > 0 && mood.length > 0 ? `Top ${emotion.join(', ')} ${mood.join(', ')} Movies For You` : emotion.length > 0 ? `Top ${emotion.join(', ')} Movies For You` : mood.length > 0 ? `Top ${mood.join(', ')} Movies For You` : "Recommended Movies"} movies={movieRecs} exploreUrl="/movies" />}
-        {tvRecs.length > 0 && <MovieRow title={emotion.length > 0 && mood.length > 0 ? `Top ${emotion.join(', ')} ${mood.join(', ')} Web Series For You` : emotion.length > 0 ? `Top ${emotion.join(', ')} Web Series For You` : mood.length > 0 ? `Top ${mood.join(', ')} Web Series For You` : "Recommended Web Series"} movies={tvRecs} exploreUrl="/tv" />}
-        
-        {similarityMovies.length > 0 && <MovieRow title="Because You Watched (Movies)" movies={similarityMovies} />}
-        {similarityWebSeries.length > 0 && <MovieRow title="Because You Watched (Web Series)" movies={similarityWebSeries} />}
+        {/* 3. Trending */}
+        {indiaMovies.length > 0 && <MovieRow title="Trending Movies in India" movies={indiaMovies} />}
+        {indiaWebSeries.length > 0 && <MovieRow title="Trending Web Series in India" movies={indiaWebSeries} />}
+        {region.length > 0 && regionMovies.length > 0 && (
+          <MovieRow title={`Trending Movies in ${regionName}`} movies={regionMovies} />
+        )}
+        {region.length > 0 && regionWebSeries.length > 0 && (
+          <MovieRow title={`Trending Web Series in ${regionName}`} movies={regionWebSeries} />
+        )}
+
+        {/* 4. Popular */}
+        {popularMovies.length > 0 && <MovieRow title="Global Popular Movies" movies={popularMovies} />}
+        {popularWebSeries.length > 0 && <MovieRow title="Global Popular Web Series" movies={popularWebSeries} />}
       </div>
     </div>
   );

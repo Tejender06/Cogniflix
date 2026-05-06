@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchWebSeries, fetchRecommendations } from "../services/movieService";
+import { fetchWebSeries, fetchRecommendations, fetchHistory } from "../services/movieService";
 import { useMovieContext } from "../context/MovieContext";
 import type { Movie } from "../services/movieService";
 import HeroBanner from "../components/HeroBanner";
@@ -10,6 +10,8 @@ import "./dashboard.css";
 export default function WebSeriesPage() {
   const [heroMovie, setHeroMovie] = useState<Movie | null>(null);
   const [trending, setTrending] = useState<Movie[]>([]);
+  const [continueWatching, setContinueWatching] = useState<Movie[]>([]);
+  const [popular, setPopular] = useState<Movie[]>([]);
   const [recentlyAdded, setRecentlyAdded] = useState<Movie[]>([]);
   const [action, setAction] = useState<Movie[]>([]);
   const [comedy, setComedy] = useState<Movie[]>([]);
@@ -26,6 +28,8 @@ export default function WebSeriesPage() {
         setLoading(true);
         const [
           trendRes,
+          popularRes,
+          histRes,
           recentRes,
           recRes,
           actionRes,
@@ -34,6 +38,8 @@ export default function WebSeriesPage() {
           dramaRes
         ] = await Promise.all([
           fetchWebSeries(undefined, undefined, 1, 20).catch(() => ({ data: [] })),
+          fetchWebSeries(undefined, undefined, 1, 20, 'popularity.desc').catch(() => ({ data: [] })),
+          fetchHistory().catch(() => []),
           fetchWebSeries(undefined, undefined, 1, 20, 'recent').catch(() => ({ data: [] })),
           fetchRecommendations(mood, language, region, 'web_series', emotion).catch(() => []),
           fetchWebSeries('action', undefined, 1, 20).catch(() => ({ data: [] })),
@@ -49,6 +55,8 @@ export default function WebSeriesPage() {
         const heroCandidate = trendingSeries.find(m => m.backdrop_url) || trendingSeries[0];
         if (heroCandidate) setHeroMovie(heroCandidate);
         
+        setPopular(popularRes.data || []);
+        setContinueWatching((histRes || []).filter(m => m.content_type === 'web_series'));
         setRecentlyAdded(recentRes.data || []);
         setRecommendations(recRes || []);
         setAction(actionRes.data || []);
@@ -86,9 +94,12 @@ export default function WebSeriesPage() {
     <div className="dashboard-container">
       {heroMovie && <HeroBanner movie={heroMovie} />}
       <div className="dashboard-content">
+        {continueWatching.length > 0 && <MovieRow title="Continue Watching" movies={continueWatching} />}
         {recommendations.length > 0 && <MovieRow title={emotion.length > 0 && mood.length > 0 ? `Top ${emotion.join(', ')} ${mood.join(', ')} Picks For You` : emotion.length > 0 ? `Top ${emotion.join(', ')} Picks For You` : mood.length > 0 ? `Top ${mood.join(', ')} Picks For You` : "Top Picks For You"} movies={recommendations} />}
+        {trending.length > 0 && <MovieRow title="Trending Row" movies={trending} />}
+        {popular.length > 0 && <MovieRow title="Popular Row" movies={popular} />}
+        
         {recentlyAdded.length > 0 && <MovieRow title="Recently Added" movies={recentlyAdded} />}
-        {trending.length > 0 && <MovieRow title="Trending Web Series" movies={trending} />}
         {action.length > 0 && <MovieRow title="Action & Adventure Series" movies={action} />}
         {comedy.length > 0 && <MovieRow title="Comedy Series" movies={comedy} />}
         {sciFi.length > 0 && <MovieRow title="Sci-Fi & Fantasy Series" movies={sciFi} />}
