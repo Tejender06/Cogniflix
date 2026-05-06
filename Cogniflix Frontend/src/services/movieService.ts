@@ -30,11 +30,13 @@ export const fetchMovies = async (
   genre?: string,
   search?: string,
   page = 1,
-  limit = 100
+  limit = 100,
+  sort?: string
 ): Promise<{ data: Movie[]; total: number; page: number; totalPages: number }> => {
   const params: Record<string, string | number> = { page, limit };
   if (genre) params.genre = genre;
   if (search) params.search = search;
+  if (sort) params.sort = sort;
   const res = await api.get<{ data: Movie[]; total: number; page: number; totalPages: number }>(
     "/api/movies",
     { params }
@@ -50,8 +52,18 @@ export const searchMovies = async (query: string): Promise<{ movie: Movie | null
   return res.data;
 };
 
-export const fetchWebSeries = async (page = 1, limit = 100): Promise<{ data: Movie[]; totalPages: number }> => {
-  const res = await api.get<{data: Movie[]; totalPages: number}>("/api/webseries", { params: { page, limit }});
+export const fetchWebSeries = async (
+  genre?: string,
+  search?: string,
+  page = 1,
+  limit = 100,
+  sort?: string
+): Promise<{ data: Movie[]; total: number; page: number; totalPages: number }> => {
+  const params: Record<string, string | number> = { page, limit };
+  if (genre) params.genre = genre;
+  if (search) params.search = search;
+  if (sort) params.sort = sort;
+  const res = await api.get<{data: Movie[]; total: number; page: number; totalPages: number}>("/api/webseries", { params });
   return res.data;
 };
 

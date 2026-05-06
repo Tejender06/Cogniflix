@@ -16,7 +16,7 @@ import pool from '../config/db.js';
 
 router.get("/", async (req, res) => {
   try {
-    const { genre, emotion, search } = req.query;
+    const { genre, emotion, search, sort } = req.query;
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const limit = Math.min(500, parseInt(req.query.limit) || 100);
     const offset = (page - 1) * limit;
@@ -46,9 +46,14 @@ router.get("/", async (req, res) => {
       baseQuery += " AND " + conditions.join(" AND ");
     }
 
+    let orderClause = `ORDER BY it.popularity_score DESC NULLS LAST, it.created_at DESC NULLS LAST`;
+    if (sort === 'recent') {
+      orderClause = `ORDER BY it.created_at DESC NULLS LAST`;
+    }
+
     const countQuery = `SELECT COUNT(*) AS total ` + baseQuery;
     const dataQuery = `SELECT it.*, et.name as emotion_name ` + baseQuery + 
-                      ` ORDER BY it.popularity_score DESC NULLS LAST, it.created_at DESC NULLS LAST LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
+                      ` ${orderClause} LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
 
     let countResult = await pool.query(countQuery, values);
     let tvResult = await pool.query(dataQuery, [...values, limit, offset]);
