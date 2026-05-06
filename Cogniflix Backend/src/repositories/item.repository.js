@@ -9,18 +9,19 @@ class ItemRepository {
     return result.rows[0] || null;
   }
 
-  async findByTitlePartial(query) {
+  async searchByTitleFuzzy(query, limit = 10) {
     const words = query.trim().split(/\s+/).map(w => w.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()).filter(w => w.length > 0);
-    if (words.length === 0) return null;
+    if (words.length === 0) return [];
     
     const conditions = words.map((_, i) => `regexp_replace(LOWER(title), '[^a-z0-9]', '', 'g') LIKE $${i + 1}`);
     const params = words.map(w => `%${w}%`);
+    params.push(limit);
     
     const result = await pool.query(
-      `SELECT * FROM items WHERE ${conditions.join(' AND ')} ORDER BY length(title) ASC LIMIT 1`,
+      `SELECT * FROM items WHERE ${conditions.join(' AND ')} ORDER BY length(title) ASC LIMIT $${params.length}`,
       params
     );
-    return result.rows[0] || null;
+    return result.rows;
   }
 
   /**

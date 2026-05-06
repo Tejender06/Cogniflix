@@ -79,101 +79,45 @@ export async function searchMovie(query) {
   const cachedResult = getFromCache(query);
   if (cachedResult) return cachedResult;
 
-  // STEP 1: LOCAL EXACT SEARCH
-  let localMovie = await itemRepository.findByTitleExact(query);
-  if (localMovie) {
-    let similar = [];
-    if (localMovie.embedding) {
-      similar = await itemRepository.findSimilarByVector(localMovie.embedding, 10, localMovie.id);
-    }
-    const result = { source: "db", movie: localMovie, similar };
+  // STEP 1: LOCAL FUZZY SEARCH (Multi-match)
+  let localMovies = await itemRepository.searchByTitleFuzzy(query, 10);
+  
+  if (localMovies && localMovies.length > 0) {
+    const result = { source: "db", results: localMovies };
     setToCache(query, result);
     return result;
   }
 
-  // STEP 2: LOCAL PARTIAL MATCH (Fuzzy Search)
-  localMovie = await itemRepository.findByTitlePartial(query);
-  if (localMovie) {
-    let similar = [];
-    if (localMovie.embedding) {
-      similar = await itemRepository.findSimilarByVector(localMovie.embedding, 10, localMovie.id);
-    }
-    const result = { source: "db", movie: localMovie, similar };
-    setToCache(query, result);
-    return result;
-  }
-
-  // STEP 3: TMDB FALLBACK
+  // STEP 2: TMDB FALLBACK
   await initGenres();
   const searchData = await fetchTMDB('/search/multi', { query, page: 1 }).catch(() => null);
-  let topResult = null;
-  let processedMovie = null;
   
   if (searchData && searchData.results && searchData.results.length > 0) {
-    // Prefer exact title match from TMDB results, otherwise take first
-    topResult = searchData.results.find(r => (r.title || r.name).toLowerCase() === query.toLowerCase());
-    if (!topResult) topResult = searchData.results[0];
-
-    processedMovie = await processItem(topResult);
-
-    // If top result is explicitly filtered, try next ones
-    if (!processedMovie) {
-      for (let i = 1; i < Math.min(3, searchData.results.length); i++) {
-        processedMovie = await processItem(searchData.results[i]);
-        if (processedMovie) {
-          topResult = searchData.results[i];
-          break;
-        }
-      }
-    }
-  }
-
-  if (processedMovie) {
-    // STEP 3: Check if TMDB resolved movie is already in DB
-    let existingMovie = await itemRepository.findByTitleExact(processedMovie.title);
-    if (existingMovie) {
-       let similar = [];
-       if (existingMovie.embedding) {
-         similar = await itemRepository.findSimilarByVector(existingMovie.embedding, 10, existingMovie.id);
-       }
-       const result = { source: "db", movie: existingMovie, similar };
-       setToCache(query, result);
-       return result;
-    }
-
-    // STEP 4: INSERT INTO DB
-    const insertedMovie = await itemRepository.insertMovie(processedMovie) || processedMovie;
-
-    // STEP 5: FETCH AND INSERT SIMILAR MOVIES
-    const tmdbId = topResult.id;
-    const mediaType = topResult.media_type === 'tv' ? 'tv' : 'movie';
-    const rawSimilarData = await fetchTMDB(`/${mediaType}/${tmdbId}/similar`, { page: 1 }).catch(() => null);
+    const topResults = searchData.results.slice(0, 5); // Take top 5
+    const processedMovies = [];
     
-    let dbSimilarMovies = [];
-    if (rawSimilarData && rawSimilarData.results) {
-      const topSimilar = rawSimilarData.results.slice(0, 10);
-      const similarToInsert = [];
-      for (const simResult of topSimilar) {
-          simResult.media_type = mediaType;
-          const simItem = await processItem(simResult);
-          if (simItem) similarToInsert.push(simItem);
+    for (const result of topResults) {
+      if (!result.media_type) {
+         result.media_type = result.title ? 'movie' : 'tv';
       }
-      if (similarToInsert.length > 0) {
-         dbSimilarMovies = await itemRepository.bulkInsertMovies(similarToInsert);
+      const processed = await processItem(result);
+      if (processed) {
+        processedMovies.push(processed);
       }
     }
-
-    // STEP 7: RETURN RESPONSE WITH VALID IDs
-    const result = {
-      source: "tmdb",
-      movie: insertedMovie,
-      similar: dbSimilarMovies
-    };
-    setToCache(query, result);
-    return result;
+    
+    if (processedMovies.length > 0) {
+      // Insert all processed movies into the database
+      const insertedMovies = await itemRepository.bulkInsertMovies(processedMovies);
+      const finalResults = insertedMovies.length > 0 ? insertedMovies : processedMovies;
+      
+      const response = { source: "tmdb", results: finalResults };
+      setToCache(query, response);
+      return response;
+    }
   }
 
-  const result = { message: "No results found" };
+  const result = { source: "db", results: [] };
   setToCache(query, result);
   return result;
 }

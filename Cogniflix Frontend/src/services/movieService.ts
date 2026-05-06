@@ -44,10 +44,10 @@ export const fetchMovies = async (
   return res.data;
 };
 
-export const searchMovies = async (query: string): Promise<{ movie: Movie | null, similar: Movie[] }> => {
-  const res = await api.get<{ movie: Movie | null, similar: Movie[], message?: string }>("/api/search", { params: { query } });
-  if (res.data.message) {
-     return { movie: null, similar: [] };
+export const searchMovies = async (query: string): Promise<{ results: Movie[] }> => {
+  const res = await api.get<{ results: Movie[] }>("/api/search", { params: { query } });
+  if (!res.data.results) {
+     return { results: [] };
   }
   return res.data;
 };

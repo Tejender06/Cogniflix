@@ -23,12 +23,9 @@ export default function SearchFeature() {
       if (searchQuery.trim().length > 0) {
         try {
           const res = await searchMovies(searchQuery);
-          const results = [];
-          if (res.movie) results.push(res.movie);
-          if (res.similar && res.similar.length > 0) {
-            results.push(...res.similar);
+          if (res.results) {
+            setSearchResults(res.results.slice(0, 5));
           }
-          setSearchResults(results.slice(0, 5));
         } catch (error) {
           console.error("Search error:", error);
         }
