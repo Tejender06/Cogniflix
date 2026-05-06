@@ -59,7 +59,7 @@ export default function MoviesPage() {
         if (heroCandidate) setHeroMovie(heroCandidate);
         
         setPopular(popularRes.data || []);
-        setContinueWatching((histRes || []).filter(m => m.content_type === 'movie' || m.content_type === undefined));
+        setContinueWatching((histRes || []).filter(m => m.content_type === 'movie'));
         setRecentlyAdded(recentRes.data || []);
         setRecommendations(recRes || []);
         setAction(actionRes.data || []);

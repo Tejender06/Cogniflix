@@ -40,7 +40,7 @@ async function addInteraction({ user_id, item_id, interaction_type, score, watch
 
 async function getHistory(user_id) {
   const result = await pool.query(
-    `SELECT i.item_id as id, MAX(i.interaction_type) as interaction_type, MAX(i.created_at) as created_at, MAX(it.title) as title, MAX(it.poster_url) as poster_url
+    `SELECT i.item_id as id, MAX(i.interaction_type) as interaction_type, MAX(i.created_at) as created_at, MAX(it.title) as title, MAX(it.poster_url) as poster_url, MAX(it.content_type) as content_type
      FROM interactions i
      JOIN items it ON i.item_id = it.id
      WHERE i.user_id = $1 AND i.interaction_type = 'watch'
