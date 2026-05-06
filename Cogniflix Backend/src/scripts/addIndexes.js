@@ -1,3 +1,19 @@
+/*
+FILE: addIndexes.js
+
+PURPOSE:
+Standalone script to create database indexes for performance optimization.
+
+FLOW:
+Script -> PostgreSQL
+
+USED BY:
+Developer/Admin manually
+
+NEXT FLOW:
+PostgreSQL Database
+
+*/
 import pool from '../config/db.js';
 
 async function createIndexes() {

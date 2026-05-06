@@ -1,3 +1,19 @@
+/*
+FILE: movieRoutes.js
+
+PURPOSE:
+Defines API endpoints for fetching movies (trending, popular, by genre).
+
+FLOW:
+Client -> Routes -> Middleware -> Controller/Database
+
+USED BY:
+app.js
+
+NEXT FLOW:
+PostgreSQL Database / Services
+
+*/
 import express from 'express';
 const router = express.Router();
 import pool from '../config/db.js';

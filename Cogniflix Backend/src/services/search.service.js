@@ -1,3 +1,19 @@
+/*
+FILE: search.service.js
+
+PURPOSE:
+Processes complex search queries including trigram matching and fuzzy searching.
+
+FLOW:
+Controller -> search.service.js -> Database
+
+USED BY:
+search.controller.js
+
+NEXT FLOW:
+PostgreSQL Database
+
+*/
 import itemRepository from '../repositories/item.repository.js';
 import { fetchTMDB, initGenres, getMovieGenres, langRegionMap } from '../utils/tmdb.js';
 import { generatePseudoEmbedding } from '../utils/embedding.js';

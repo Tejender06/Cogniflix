@@ -1,3 +1,19 @@
+/*
+FILE: userEmbedding.repository.js
+
+PURPOSE:
+Handles storage and retrieval of user preference embeddings for personalized recommendations.
+
+FLOW:
+Service -> Repository -> Database
+
+USED BY:
+embedding.service.js
+
+NEXT FLOW:
+PostgreSQL Database
+
+*/
 import db from '../config/db.js';
 
 async function getUserEmbedding(userId) {

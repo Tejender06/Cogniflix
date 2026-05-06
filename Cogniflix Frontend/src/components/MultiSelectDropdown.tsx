@@ -1,3 +1,19 @@
+/*
+FILE: MultiSelectDropdown.tsx
+
+PURPOSE:
+Custom dropdown UI component allowing multiple selections (genres, regions, etc).
+
+FLOW:
+User Interaction -> Dropdown State -> Parent Callback
+
+USED BY:
+Navbar.tsx
+
+NEXT FLOW:
+Parent Component State
+
+*/
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 import './multiselect.css';

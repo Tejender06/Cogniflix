@@ -1,3 +1,19 @@
+/*
+FILE: seedPopular.js
+
+PURPOSE:
+Fetches popular content from TMDB and seeds it into the local database.
+
+FLOW:
+Script -> TMDB API -> PostgreSQL
+
+USED BY:
+Developer/Admin manually
+
+NEXT FLOW:
+TMDB API / PostgreSQL Database
+
+*/
 import { fetchTMDB, initGenres, langRegionMap } from '../utils/tmdb.js';
 import { processItem } from '../services/search.service.js';
 import itemRepository from '../repositories/item.repository.js';

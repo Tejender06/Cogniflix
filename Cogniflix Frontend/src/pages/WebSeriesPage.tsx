@@ -1,3 +1,19 @@
+/*
+FILE: WebSeriesPage.tsx
+
+PURPOSE:
+Dedicated page for displaying web series, categorized by genres, trending, and recommendations.
+
+FLOW:
+Router -> WebSeriesPage -> movieService.ts -> UI
+
+USED BY:
+AppRoutes.tsx
+
+NEXT FLOW:
+MovieRow.tsx / movieService.ts
+
+*/
 import { useEffect, useState } from "react";
 import { fetchWebSeries, fetchRecommendations, fetchHistory } from "../services/movieService";
 import { useMovieContext } from "../context/MovieContext";

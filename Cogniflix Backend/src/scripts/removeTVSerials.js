@@ -1,3 +1,19 @@
+/*
+FILE: removeTVSerials.js
+
+PURPOSE:
+Script to clean up database by identifying and removing low-quality TV serials.
+
+FLOW:
+Script -> PostgreSQL
+
+USED BY:
+Developer/Admin manually
+
+NEXT FLOW:
+PostgreSQL Database
+
+*/
 import pool from '../config/db.js';
 
 async function removeTVSerials() {

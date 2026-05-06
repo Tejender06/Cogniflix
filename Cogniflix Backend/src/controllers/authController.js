@@ -1,3 +1,19 @@
+/*
+FILE: authController.js
+
+PURPOSE:
+Handles user authentication including signup, login, and token generation.
+
+FLOW:
+Routes -> Controller -> authService.js
+
+USED BY:
+authRoutes.js
+
+NEXT FLOW:
+authService.js
+
+*/
 import bcrypt from 'bcryptjs';
 import pool from '../config/db.js';
 import { generateToken } from '../utils/jwt.js';

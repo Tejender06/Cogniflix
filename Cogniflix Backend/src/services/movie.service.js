@@ -1,3 +1,19 @@
+/*
+FILE: movie.service.js
+
+PURPOSE:
+Handles business logic related to movie and web series data retrieval.
+
+FLOW:
+Controller -> movie.service.js -> item.repository.js
+
+USED BY:
+Various Controllers
+
+NEXT FLOW:
+item.repository.js
+
+*/
 import axios from 'axios';
 import pool from '../config/db.js';
 import * as emotionMap from '../utils/emotionMap.js';

@@ -1,3 +1,19 @@
+/*
+FILE: SearchFeature.tsx
+
+PURPOSE:
+Dynamic search bar component with debouncing and instant results preview.
+
+FLOW:
+User Types -> Debounce -> movieService.ts -> Render Results
+
+USED BY:
+Navbar.tsx
+
+NEXT FLOW:
+movieService.ts
+
+*/
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { searchMovies } from "../services/movieService";

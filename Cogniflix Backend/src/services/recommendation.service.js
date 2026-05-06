@@ -1,3 +1,19 @@
+/*
+FILE: recommendation.service.js
+
+PURPOSE:
+Core engine for generating personalized recommendations using multi-filters and SQL.
+
+FLOW:
+Controller -> recommendation.service.js -> Database/TMDB
+
+USED BY:
+recommendation.controller.js
+
+NEXT FLOW:
+PostgreSQL Database / tmdb.js
+
+*/
 import db from '../config/db.js';
 import { fetchTMDB, langRegionMap, movieGenreMap, initGenres } from '../utils/tmdb.js';
 import { processItem } from './search.service.js';

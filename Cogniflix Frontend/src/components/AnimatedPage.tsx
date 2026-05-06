@@ -1,3 +1,19 @@
+/*
+FILE: AnimatedPage.tsx
+
+PURPOSE:
+Provides route transition animations wrapper for page components.
+
+FLOW:
+Router -> AnimatedPage -> Specific Page
+
+USED BY:
+AppRoutes.tsx
+
+NEXT FLOW:
+Framer Motion / Page Components
+
+*/
 import { motion } from "framer-motion";
 
 const animations = {

@@ -1,3 +1,19 @@
+/*
+FILE: embedding.js
+
+PURPOSE:
+Utility functions for computing vector cosine similarities and vector math.
+
+FLOW:
+Called natively as utility
+
+USED BY:
+embedding.service.js, recommendation.service.js
+
+NEXT FLOW:
+N/A
+
+*/
 export function generatePseudoEmbedding(title, genre, language) {
   const seed = (title || '') + (genre || '') + (language || '');
   const dims = 1536;
