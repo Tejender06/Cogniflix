@@ -32,27 +32,37 @@ async function dynamicFetch(mood, language, contentType, emotion, requiredCount)
     if (entry) langCode = entry[0];
   }
 
-  let genreId = null;
+  let genreIds = [];
   if (mood) {
-    const moodLower = mood.toLowerCase() === 'sci-fi' ? 'science fiction' : mood.toLowerCase();
-    const gEntry = Object.entries(movieGenreMap).find(([k, v]) => v.toLowerCase() === moodLower || v.toLowerCase().includes(moodLower));
-    if (gEntry) genreId = gEntry[0];
-  } else if (emotion) {
-    const mappedGenre = emotionToGenreMap[emotion.toLowerCase()];
-    if (mappedGenre) {
-      const gEntry = Object.entries(movieGenreMap).find(([k, v]) => v.toLowerCase() === mappedGenre.toLowerCase());
-      if (gEntry) genreId = gEntry[0];
+    const moods = mood.split(',').map(m => m.trim()).filter(Boolean);
+    for (const m of moods) {
+      const moodLower = m.toLowerCase() === 'sci-fi' ? 'science fiction' : m.toLowerCase();
+      const gEntry = Object.entries(movieGenreMap).find(([k, v]) => v.toLowerCase() === moodLower || v.toLowerCase().includes(moodLower));
+      if (gEntry) genreIds.push(gEntry[0]);
+    }
+  } 
+  
+  if (emotion) {
+    const emotions = emotion.split(',').map(e => e.trim()).filter(Boolean);
+    for (const e of emotions) {
+      const mappedGenre = emotionToGenreMap[e.toLowerCase()];
+      if (mappedGenre) {
+        const gEntry = Object.entries(movieGenreMap).find(([k, v]) => v.toLowerCase() === mappedGenre.toLowerCase());
+        if (gEntry) genreIds.push(gEntry[0]);
+      }
     }
   }
+
+  genreIds = [...new Set(genreIds)];
 
   const endpoint = contentType === 'movie' ? '/discover/movie' : '/discover/tv';
   const params = {
     sort_by: 'popularity.desc'
   };
   if (langCode) params.with_original_language = langCode;
-  if (genreId) params.with_genres = genreId;
+  if (genreIds.length > 0) params.with_genres = genreIds.join('|');
 
-  if (!langCode && !genreId) return;
+  if (!langCode && genreIds.length === 0) return;
 
   let insertedCount = 0;
   for (let page = 1; page <= 3; page++) {
@@ -91,25 +101,49 @@ async function getFallback(topK, mood, language, region, emotion = null) {
   let params = [TV_SERIAL_REGEX, EXPLICIT_REGEX];
   
   if (language) {
-    params.push(language);
-    query += ` AND language ILIKE '%' || $${params.length} || '%'`;
+    const langs = language.split(',').map(l => l.trim()).filter(Boolean);
+    if (langs.length > 0) {
+      const conditions = langs.map(l => {
+        params.push(l);
+        return `language ILIKE '%' || $${params.length} || '%'`;
+      });
+      query += ` AND (${conditions.join(' OR ')})`;
+    }
   }
   if (region) {
-    params.push(region);
-    query += ` AND region ILIKE '%' || $${params.length} || '%'`;
+    const regions = region.split(',').map(r => r.trim()).filter(Boolean);
+    if (regions.length > 0) {
+      const conditions = regions.map(r => {
+        params.push(r);
+        return `region ILIKE '%' || $${params.length} || '%'`;
+      });
+      query += ` AND (${conditions.join(' OR ')})`;
+    }
   }
   if (mood) {
-    if (mood.toLowerCase() === 'sci-fi') {
-      query += ` AND (genre ILIKE '%Science Fiction%' OR genre ILIKE '%Sci-Fi%')`;
-    } else {
-      params.push(mood);
-      query += ` AND genre ILIKE '%' || $${params.length} || '%'`;
+    const moods = mood.split(',').map(m => m.trim()).filter(Boolean);
+    if (moods.length > 0) {
+      const conditions = moods.map(m => {
+        if (m.toLowerCase() === 'sci-fi') {
+          return `(genre ILIKE '%Science Fiction%' OR genre ILIKE '%Sci-Fi%')`;
+        } else {
+          params.push(m);
+          return `genre ILIKE '%' || $${params.length} || '%'`;
+        }
+      });
+      query += ` AND (${conditions.join(' OR ')})`;
     }
   }
 
   if (emotion) {
-    params.push(emotion);
-    query += ` AND emotion_tag_id IN (SELECT id FROM emotion_tags WHERE name ILIKE '%' || $${params.length} || '%')`;
+    const emotions = emotion.split(',').map(e => e.trim()).filter(Boolean);
+    if (emotions.length > 0) {
+      const conditions = emotions.map(e => {
+        params.push(e);
+        return `name ILIKE '%' || $${params.length} || '%'`;
+      });
+      query += ` AND emotion_tag_id IN (SELECT id FROM emotion_tags WHERE ${conditions.join(' OR ')})`;
+    }
   }
   
   params.push(topK);
@@ -164,27 +198,51 @@ async function getRecommendations(userId, mood, language, region, contentType = 
     let selectSimilarity = ", 0 AS similarity_score";
 
     if (language) {
-      queryArgs.push(language);
-      filterClauses.push(`i.language ILIKE '%' || $${queryArgs.length} || '%'`);
+      const langs = language.split(',').map(l => l.trim()).filter(Boolean);
+      if (langs.length > 0) {
+        const conditions = langs.map(l => {
+          queryArgs.push(l);
+          return `i.language ILIKE '%' || $${queryArgs.length} || '%'`;
+        });
+        filterClauses.push(`(${conditions.join(' OR ')})`);
+      }
     }
 
     if (region) {
-      queryArgs.push(region);
-      filterClauses.push(`i.region ILIKE '%' || $${queryArgs.length} || '%'`);
+      const regions = region.split(',').map(r => r.trim()).filter(Boolean);
+      if (regions.length > 0) {
+        const conditions = regions.map(r => {
+          queryArgs.push(r);
+          return `i.region ILIKE '%' || $${queryArgs.length} || '%'`;
+        });
+        filterClauses.push(`(${conditions.join(' OR ')})`);
+      }
     }
 
     if (mood) {
-      if (mood.toLowerCase() === 'sci-fi') {
-        filterClauses.push(`(i.genre ILIKE '%Science Fiction%' OR i.genre ILIKE '%Sci-Fi%')`);
-      } else {
-        queryArgs.push(mood);
-        filterClauses.push(`i.genre ILIKE '%' || $${queryArgs.length} || '%'`);
+      const moods = mood.split(',').map(m => m.trim()).filter(Boolean);
+      if (moods.length > 0) {
+        const conditions = moods.map(m => {
+          if (m.toLowerCase() === 'sci-fi') {
+            return `(i.genre ILIKE '%Science Fiction%' OR i.genre ILIKE '%Sci-Fi%')`;
+          } else {
+            queryArgs.push(m);
+            return `i.genre ILIKE '%' || $${queryArgs.length} || '%'`;
+          }
+        });
+        filterClauses.push(`(${conditions.join(' OR ')})`);
       }
     }
 
     if (emotion) {
-      queryArgs.push(emotion);
-      filterClauses.push(`i.emotion_tag_id IN (SELECT id FROM emotion_tags WHERE name ILIKE '%' || $${queryArgs.length} || '%')`);
+      const emotions = emotion.split(',').map(e => e.trim()).filter(Boolean);
+      if (emotions.length > 0) {
+        const conditions = emotions.map(e => {
+          queryArgs.push(e);
+          return `name ILIKE '%' || $${queryArgs.length} || '%'`;
+        });
+        filterClauses.push(`i.emotion_tag_id IN (SELECT id FROM emotion_tags WHERE ${conditions.join(' OR ')})`);
+      }
     }
 
     let orderClause = `ORDER BY i.popularity_score DESC NULLS LAST LIMIT 600`;

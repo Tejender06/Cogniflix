@@ -21,14 +21,14 @@ import type { Movie } from "../services/movieService";
 interface MovieContextType {
   heroMovie: Movie | null;
   setHeroMovie: (movie: Movie) => void;
-  mood: string;
-  setMood: (mood: string) => void;
-  emotion: string;
-  setEmotion: (emotion: string) => void;
-  language: string;
-  setLanguage: (lang: string) => void;
-  region: string;
-  setRegion: (region: string) => void;
+  mood: string[];
+  setMood: (mood: string[]) => void;
+  emotion: string[];
+  setEmotion: (emotion: string[]) => void;
+  language: string[];
+  setLanguage: (lang: string[]) => void;
+  region: string[];
+  setRegion: (region: string[]) => void;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
 }
@@ -37,10 +37,10 @@ const MovieContext = createContext<MovieContextType | undefined>(undefined);
 
 export function MovieProvider({ children }: { children: React.ReactNode }) {
   const [heroMovie, setHeroMovie] = useState<Movie | null>(null);
-  const [mood, setMood] = useState<string>('');
-  const [emotion, setEmotion] = useState<string>('');
-  const [language, setLanguage] = useState<string>('');
-  const [region, setRegion] = useState<string>('');
+  const [mood, setMood] = useState<string[]>([]);
+  const [emotion, setEmotion] = useState<string[]>([]);
+  const [language, setLanguage] = useState<string[]>([]);
+  const [region, setRegion] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   return (

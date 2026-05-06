@@ -21,6 +21,7 @@ import { useMovieContext } from "../context/MovieContext";
 import { logoutUser } from "../services/authService";
 import { LogOut } from "lucide-react";
 import SearchFeature from "./SearchFeature";
+import MultiSelectDropdown from "./MultiSelectDropdown";
 import "./navbar.css";
 
 export default function Navbar() {
@@ -61,58 +62,30 @@ export default function Navbar() {
         
         <div className="navbar-right">
           <div className="navbar-filters">
-            <select 
-              value={mood} 
-              onChange={(e) => setMood(e.target.value)}
-              className="netflix-select"
-            >
-              <option value="">Genres</option>
-              {['Action', 'Adventure', 'Comedy', 'Drama', 'Horror', 'Romance', 'Sci-Fi', 'Thriller'].map(m => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
-            <select 
-              value={emotion} 
-              onChange={(e) => setEmotion(e.target.value)}
-              className="netflix-select"
-            >
-              <option value="">Mood</option>
-              {['Happy', 'Dark', 'Intense', 'Romantic', 'Fear', 'Curious', 'Emotional', 'Exciting', 'Mind-Bending', 'Calm'].map(m => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
-            <select 
-              value={language} 
-              onChange={(e) => setLanguage(e.target.value)}
-              className="netflix-select"
-            >
-              <option value="">Languages</option>
-              <option value="English">English</option>
-              <option value="Hindi">Hindi</option>
-              <option value="Kannada">Kannada</option>
-              <option value="Marathi">Marathi</option>
-              <option value="Tamil">Tamil</option>
-              <option value="Malayalam">Malayalam</option>
-              <option value="Telugu">Telugu</option>
-              <option value="Spanish">Spanish</option>
-              <option value="Korean">Korean</option>
-            </select>
-            <select 
-              value={region} 
-              onChange={(e) => setRegion(e.target.value)}
-              className="netflix-select"
-            >
-              <option value="">Region</option>
-              <option value="USA">USA</option>
-              <option value="India">India</option>
-              <option value="Karnataka">Karnataka</option>
-              <option value="Maharashtra">Maharashtra</option>
-              <option value="Tamil Nadu">Tamil Nadu</option>
-              <option value="Kerala">Kerala</option>
-              <option value="Andhra Pradesh">Andhra Pradesh</option>
-              <option value="UK">UK</option>
-              <option value="Korea">Korea</option>
-            </select>
+            <MultiSelectDropdown 
+              label="Genres"
+              options={['Action', 'Adventure', 'Comedy', 'Drama', 'Horror', 'Romance', 'Sci-Fi', 'Thriller']}
+              selected={mood}
+              onChange={setMood}
+            />
+            <MultiSelectDropdown 
+              label="Mood"
+              options={['Happy', 'Dark', 'Intense', 'Romantic', 'Fear', 'Curious', 'Emotional', 'Exciting', 'Mind-Bending', 'Calm']}
+              selected={emotion}
+              onChange={setEmotion}
+            />
+            <MultiSelectDropdown 
+              label="Languages"
+              options={['English', 'Hindi', 'Kannada', 'Marathi', 'Tamil', 'Malayalam', 'Telugu', 'Spanish', 'Korean']}
+              selected={language}
+              onChange={setLanguage}
+            />
+            <MultiSelectDropdown 
+              label="Region"
+              options={['USA', 'India', 'Karnataka', 'Maharashtra', 'Tamil Nadu', 'Kerala', 'Andhra Pradesh', 'UK', 'Korea']}
+              selected={region}
+              onChange={setRegion}
+            />
           </div>
 
           <SearchFeature />

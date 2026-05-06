@@ -110,7 +110,7 @@ export default function DashboardPage() {
 
   const defaultMovie = heroMovie || similarityMovies[0] || popularMovies[0];
   
-  const regionName = region ? region.charAt(0).toUpperCase() + region.slice(1) : "";
+  const regionName = region.length > 0 ? region.join(', ') : "";
 
   return (
     <div className="dashboard-container">
@@ -125,18 +125,18 @@ export default function DashboardPage() {
         {indiaMovies.length > 0 && <MovieRow title="Trending Movies in India" movies={indiaMovies} />}
         {indiaWebSeries.length > 0 && <MovieRow title="Trending Web Series in India" movies={indiaWebSeries} />}
 
-        {region && regionMovies.length > 0 && (
+        {region.length > 0 && regionMovies.length > 0 && (
           <MovieRow title={`Top Movies for ${regionName}`} movies={regionMovies} />
         )}
-        {region && regionWebSeries.length > 0 && (
+        {region.length > 0 && regionWebSeries.length > 0 && (
           <MovieRow title={`Top Web Series for ${regionName}`} movies={regionWebSeries} />
         )}
 
-        {moodMovies.length > 0 && <MovieRow title={mood ? `${mood} Movies` : "Top Genre Movies"} movies={moodMovies} />}
-        {moodWebSeries.length > 0 && <MovieRow title={mood ? `${mood} Web Series` : "Top Genre Web Series"} movies={moodWebSeries} />}
+        {moodMovies.length > 0 && <MovieRow title={mood.length > 0 ? `${mood.join(', ')} Movies` : "Top Genre Movies"} movies={moodMovies} />}
+        {moodWebSeries.length > 0 && <MovieRow title={mood.length > 0 ? `${mood.join(', ')} Web Series` : "Top Genre Web Series"} movies={moodWebSeries} />}
         
-        {movieRecs.length > 0 && <MovieRow title={emotion && mood ? `Top ${emotion} ${mood} Movies For You` : emotion ? `Top ${emotion} Movies For You` : mood ? `Top ${mood} Movies For You` : "Recommended Movies"} movies={movieRecs} exploreUrl="/movies" />}
-        {tvRecs.length > 0 && <MovieRow title={emotion && mood ? `Top ${emotion} ${mood} Web Series For You` : emotion ? `Top ${emotion} Web Series For You` : mood ? `Top ${mood} Web Series For You` : "Recommended Web Series"} movies={tvRecs} exploreUrl="/tv" />}
+        {movieRecs.length > 0 && <MovieRow title={emotion.length > 0 && mood.length > 0 ? `Top ${emotion.join(', ')} ${mood.join(', ')} Movies For You` : emotion.length > 0 ? `Top ${emotion.join(', ')} Movies For You` : mood.length > 0 ? `Top ${mood.join(', ')} Movies For You` : "Recommended Movies"} movies={movieRecs} exploreUrl="/movies" />}
+        {tvRecs.length > 0 && <MovieRow title={emotion.length > 0 && mood.length > 0 ? `Top ${emotion.join(', ')} ${mood.join(', ')} Web Series For You` : emotion.length > 0 ? `Top ${emotion.join(', ')} Web Series For You` : mood.length > 0 ? `Top ${mood.join(', ')} Web Series For You` : "Recommended Web Series"} movies={tvRecs} exploreUrl="/tv" />}
         
         {similarityMovies.length > 0 && <MovieRow title="Because You Watched (Movies)" movies={similarityMovies} />}
         {similarityWebSeries.length > 0 && <MovieRow title="Because You Watched (Web Series)" movies={similarityWebSeries} />}
