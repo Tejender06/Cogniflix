@@ -91,7 +91,19 @@ export async function searchMovie(query) {
     return result;
   }
 
-  // STEP 2: TMDB FALLBACK
+  // STEP 2: LOCAL PARTIAL MATCH (Fuzzy Search)
+  localMovie = await itemRepository.findByTitlePartial(query);
+  if (localMovie) {
+    let similar = [];
+    if (localMovie.embedding) {
+      similar = await itemRepository.findSimilarByVector(localMovie.embedding, 10, localMovie.id);
+    }
+    const result = { source: "db", movie: localMovie, similar };
+    setToCache(query, result);
+    return result;
+  }
+
+  // STEP 3: TMDB FALLBACK
   await initGenres();
   const searchData = await fetchTMDB('/search/multi', { query, page: 1 }).catch(() => null);
   let topResult = null;
@@ -157,18 +169,6 @@ export async function searchMovie(query) {
       movie: insertedMovie,
       similar: dbSimilarMovies
     };
-    setToCache(query, result);
-    return result;
-  }
-
-  // STEP 8: IF TMDB FAILS, TRY LOCAL PARTIAL MATCH
-  localMovie = await itemRepository.findByTitlePartial(query);
-  if (localMovie) {
-    let similar = [];
-    if (localMovie.embedding) {
-      similar = await itemRepository.findSimilarByVector(localMovie.embedding, 10, localMovie.id);
-    }
-    const result = { source: "db", movie: localMovie, similar };
     setToCache(query, result);
     return result;
   }

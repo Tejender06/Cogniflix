@@ -139,7 +139,7 @@ async function getRecommendations(userId, mood, language, region, contentType = 
     let queryArgs = [contentType, userId, TV_SERIAL_REGEX, EXPLICIT_REGEX];
     let filterClauses = [
       "i.content_type = $1", 
-      "i.id NOT IN (SELECT item_id FROM interactions WHERE user_id = $2 AND interaction_type = 'watch')",
+      "NOT EXISTS (SELECT 1 FROM interactions int_sub WHERE int_sub.item_id = i.id AND int_sub.user_id = $2 AND int_sub.interaction_type IN ('watch', 'like', 'rate', 'dislike'))",
       "i.title !~* $3",
       "i.title !~* $4",
       "i.description !~* $4",
@@ -170,13 +170,13 @@ async function getRecommendations(userId, mood, language, region, contentType = 
       }
     }
 
-    let orderClause = `ORDER BY i.popularity_score DESC NULLS LAST LIMIT 300`;
+    let orderClause = `ORDER BY i.popularity_score DESC NULLS LAST LIMIT 600`;
 
     if (userEmbedding && userEmbedding.embedding) {
       queryArgs.push(userEmbedding.embedding);
       const userVecParamIdx = queryArgs.length;
       selectSimilarity = `, (1 - (i.embedding <=> $${userVecParamIdx}::vector)) AS similarity_score`;
-      orderClause = `ORDER BY i.embedding <=> $${userVecParamIdx}::vector LIMIT 300`;
+      orderClause = `ORDER BY i.embedding <=> $${userVecParamIdx}::vector LIMIT 600`;
     }
 
     const finalQuery = `

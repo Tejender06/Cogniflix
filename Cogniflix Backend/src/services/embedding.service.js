@@ -10,7 +10,9 @@ async function updateUserEmbedding(userId) {
        JOIN items i ON intr.item_id = i.id
        WHERE intr.user_id = $1
        AND intr.interaction_type IN ('watch', 'like', 'rate')
-       AND i.embedding IS NOT NULL`,
+       AND i.embedding IS NOT NULL
+       ORDER BY intr.created_at DESC
+       LIMIT 50`,
       [userId]
     );
 
