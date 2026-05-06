@@ -135,8 +135,8 @@ export default function DashboardPage() {
         {moodMovies.length > 0 && <MovieRow title={mood ? `${mood} Movies` : "Top Genre Movies"} movies={moodMovies} />}
         {moodWebSeries.length > 0 && <MovieRow title={mood ? `${mood} Web Series` : "Top Genre Web Series"} movies={moodWebSeries} />}
         
-        {movieRecs.length > 0 && <MovieRow title="Recommended Movies" movies={movieRecs} exploreUrl="/movies" />}
-        {tvRecs.length > 0 && <MovieRow title="Recommended Web Series" movies={tvRecs} exploreUrl="/tv" />}
+        {movieRecs.length > 0 && <MovieRow title={emotion && mood ? `Top ${emotion} ${mood} Movies For You` : emotion ? `Top ${emotion} Movies For You` : mood ? `Top ${mood} Movies For You` : "Recommended Movies"} movies={movieRecs} exploreUrl="/movies" />}
+        {tvRecs.length > 0 && <MovieRow title={emotion && mood ? `Top ${emotion} ${mood} Web Series For You` : emotion ? `Top ${emotion} Web Series For You` : mood ? `Top ${mood} Web Series For You` : "Recommended Web Series"} movies={tvRecs} exploreUrl="/tv" />}
         
         {similarityMovies.length > 0 && <MovieRow title="Because You Watched (Movies)" movies={similarityMovies} />}
         {similarityWebSeries.length > 0 && <MovieRow title="Because You Watched (Web Series)" movies={similarityWebSeries} />}

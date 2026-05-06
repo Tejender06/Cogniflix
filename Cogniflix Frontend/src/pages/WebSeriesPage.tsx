@@ -86,7 +86,7 @@ export default function WebSeriesPage() {
     <div className="dashboard-container">
       {heroMovie && <HeroBanner movie={heroMovie} />}
       <div className="dashboard-content">
-        {recommendations.length > 0 && <MovieRow title="Top Picks For You" movies={recommendations} />}
+        {recommendations.length > 0 && <MovieRow title={emotion && mood ? `Top ${emotion} ${mood} Picks For You` : emotion ? `Top ${emotion} Picks For You` : mood ? `Top ${mood} Picks For You` : "Top Picks For You"} movies={recommendations} />}
         {recentlyAdded.length > 0 && <MovieRow title="Recently Added" movies={recentlyAdded} />}
         {trending.length > 0 && <MovieRow title="Trending Web Series" movies={trending} />}
         {action.length > 0 && <MovieRow title="Action & Adventure Series" movies={action} />}

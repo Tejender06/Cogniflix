@@ -2,6 +2,7 @@ import db from '../config/db.js';
 import { fetchTMDB, langRegionMap, movieGenreMap, initGenres } from '../utils/tmdb.js';
 import { processItem } from './search.service.js';
 import itemRepository from '../repositories/item.repository.js';
+import { emotionToGenreMap } from '../utils/emotionMap.js';
 
 const getBucket = (hour) => {
   if (hour >= 5 && hour <= 11) return 'morning';
@@ -22,7 +23,7 @@ const REGION_LANGUAGE_MAP = {
 const TV_SERIAL_REGEX = '\\y(idol|roadies|bigg boss|splitsvilla|khatron ke khiladi|sa re ga ma pa|dance india dance|kapil sharma|masterchef|kbc|kaun banega crorepati|kaisa ye|rangrasiya|kumkum|kyunki|kahaani|kasautii|naagin|yeh rishta|tarak mehta|taarak mehta|cid|savdhaan|crime patrol)\\y';
 const EXPLICIT_REGEX = '\\y(sex|porn|porno|hentai|erotica|erotic|adult|lustful|lust|sensual|naked|prostitute|prostitutes|seduction|sexual|sexually|cuckold|perverted|stepdad|stepdaddy|stepmom|impregnates|incest)\\y';
 
-async function dynamicFetch(mood, language, contentType, requiredCount) {
+async function dynamicFetch(mood, language, contentType, emotion, requiredCount) {
   await initGenres();
   
   let langCode = null;
@@ -36,6 +37,12 @@ async function dynamicFetch(mood, language, contentType, requiredCount) {
     const moodLower = mood.toLowerCase() === 'sci-fi' ? 'science fiction' : mood.toLowerCase();
     const gEntry = Object.entries(movieGenreMap).find(([k, v]) => v.toLowerCase() === moodLower || v.toLowerCase().includes(moodLower));
     if (gEntry) genreId = gEntry[0];
+  } else if (emotion) {
+    const mappedGenre = emotionToGenreMap[emotion.toLowerCase()];
+    if (mappedGenre) {
+      const gEntry = Object.entries(movieGenreMap).find(([k, v]) => v.toLowerCase() === mappedGenre.toLowerCase());
+      if (gEntry) genreId = gEntry[0];
+    }
   }
 
   const endpoint = contentType === 'movie' ? '/discover/movie' : '/discover/tv';
@@ -68,7 +75,7 @@ async function dynamicFetch(mood, language, contentType, requiredCount) {
   }
 }
 
-async function getFallback(topK, mood, language, region) {
+async function getFallback(topK, mood, language, region, emotion = null) {
   let query = `
      SELECT id, title, description, genre, language, region,
             poster_url, backdrop_url, popularity_score, content_type
@@ -100,14 +107,19 @@ async function getFallback(topK, mood, language, region) {
     }
   }
 
+  if (emotion) {
+    params.push(emotion);
+    query += ` AND emotion_tag_id IN (SELECT id FROM emotion_tags WHERE name ILIKE '%' || $${params.length} || '%')`;
+  }
+  
   params.push(topK);
   query += ` ORDER BY popularity_score DESC NULLS LAST LIMIT $${params.length}`;
 
   let result = await db.query(query, params);
   
-  if (result.rows.length < 20 && (language || mood)) {
-    await dynamicFetch(mood, language, 'movie', 40 - result.rows.length);
-    await dynamicFetch(mood, language, 'web_series', 40 - result.rows.length);
+  if (result.rows.length < 20 && (language || mood || emotion)) {
+    await dynamicFetch(mood, language, 'movie', emotion, 40 - result.rows.length);
+    await dynamicFetch(mood, language, 'web_series', emotion, 40 - result.rows.length);
     result = await db.query(query, params);
   }
 
@@ -198,8 +210,8 @@ async function getRecommendations(userId, mood, language, region, contentType = 
     let candidatesResult = await db.query(finalQuery, queryArgs);
     let candidates = candidatesResult.rows;
 
-    if (candidates.length < 20 && (language || mood)) {
-      await dynamicFetch(mood, language, contentType, 40 - candidates.length);
+    if (candidates.length < 20 && (language || mood || emotion)) {
+      await dynamicFetch(mood, language, contentType, emotion, 40 - candidates.length);
       candidatesResult = await db.query(finalQuery, queryArgs);
       candidates = candidatesResult.rows;
     }
@@ -333,7 +345,7 @@ async function getRecommendations(userId, mood, language, region, contentType = 
     return uniqueItems.slice(0, topK);
   } catch (err) {
     console.error('Recommendation Engine Error:', err);
-    return await getFallback(topK, mood, language, region);
+    return await getFallback(topK, mood, language, region, emotion);
   }
 }
 
@@ -342,7 +354,7 @@ async function getDashboardRecommendations(userId, mood, language, region, emoti
     const [movieRecs, tvRecs, trendData] = await Promise.all([
       getRecommendations(userId, mood, language, region, 'movie', emotion, 300),
       getRecommendations(userId, mood, language, region, 'web_series', emotion, 200),
-      getFallback(200, mood, language, region)
+      getFallback(200, mood, language, region, emotion)
     ]);
 
     const allRecs = [...movieRecs, ...tvRecs].sort((a, b) => (b.finalScore || 0) - (a.finalScore || 0));

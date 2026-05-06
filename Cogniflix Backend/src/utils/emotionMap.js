@@ -91,6 +91,25 @@ const emotionMap = {
   dance: "upbeat",
 };
 
+const emotionToGenreMap = {
+  intense: "Action",
+  dark: "Crime",
+  happy: "Comedy",
+  funny: "Comedy",
+  romantic: "Romance",
+  calm: "Documentary",
+  emotional: "Drama",
+  exciting: "Adventure",
+  magical: "Fantasy",
+  "mind-bending": "Science Fiction",
+  epic: "Adventure",
+  fear: "Horror",
+  curious: "Mystery",
+  informative: "Documentary",
+  historical: "History",
+  upbeat: "Music"
+};
+
 function mapToEmotion(genres = [], keywords = []) {
   const all = [
     ...genres.map(g => g.toLowerCase()),
@@ -104,4 +123,4 @@ function mapToEmotion(genres = [], keywords = []) {
   return "neutral";
 }
 
-export { mapToEmotion };
+export { emotionMap, mapToEmotion, emotionToGenreMap };
