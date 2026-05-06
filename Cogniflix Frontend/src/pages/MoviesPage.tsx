@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchMovies, fetchTrendingMovies } from "../services/movieService";
+import { fetchMovies, fetchTrendingMovies, fetchRecommendations } from "../services/movieService";
 import type { Movie } from "../services/movieService";
 import HeroBanner from "../components/HeroBanner";
 import MovieRow from "../components/MovieRow";
@@ -15,6 +15,7 @@ export default function MoviesPage() {
   const [sciFi, setSciFi] = useState<Movie[]>([]);
   const [horror, setHorror] = useState<Movie[]>([]);
   const [romance, setRomance] = useState<Movie[]>([]);
+  const [recommendations, setRecommendations] = useState<Movie[]>([]);
   
   const [loading, setLoading] = useState(true);
 
@@ -25,6 +26,7 @@ export default function MoviesPage() {
         const [
           trendRes,
           recentRes,
+          recRes,
           actionRes,
           comedyRes,
           scifiRes,
@@ -33,6 +35,7 @@ export default function MoviesPage() {
         ] = await Promise.all([
           fetchTrendingMovies().catch(() => []),
           fetchMovies(undefined, undefined, 1, 20, 'recent').catch(() => ({ data: [] })),
+          fetchRecommendations(undefined, undefined, undefined, 'movie').catch(() => []),
           fetchMovies('action', undefined, 1, 20).catch(() => ({ data: [] })),
           fetchMovies('comedy', undefined, 1, 20).catch(() => ({ data: [] })),
           fetchMovies('sci-fi', undefined, 1, 20).catch(() => ({ data: [] })),
@@ -48,6 +51,7 @@ export default function MoviesPage() {
         if (heroCandidate) setHeroMovie(heroCandidate);
         
         setRecentlyAdded(recentRes.data || []);
+        setRecommendations(recRes || []);
         setAction(actionRes.data || []);
         setComedy(comedyRes.data || []);
         setSciFi(scifiRes.data || []);
@@ -84,6 +88,7 @@ export default function MoviesPage() {
     <div className="dashboard-container">
       {heroMovie && <HeroBanner movie={heroMovie} />}
       <div className="dashboard-content">
+        {recommendations.length > 0 && <MovieRow title="Top Picks For You" movies={recommendations} />}
         {recentlyAdded.length > 0 && <MovieRow title="Recently Added" movies={recentlyAdded} />}
         {trending.length > 0 && <MovieRow title="Trending Movies" movies={trending} />}
         {action.length > 0 && <MovieRow title="Action & Adventure" movies={action} />}

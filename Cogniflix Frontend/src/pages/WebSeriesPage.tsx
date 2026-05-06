@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchWebSeries } from "../services/movieService";
+import { fetchWebSeries, fetchRecommendations } from "../services/movieService";
 import type { Movie } from "../services/movieService";
 import HeroBanner from "../components/HeroBanner";
 import MovieRow from "../components/MovieRow";
@@ -14,6 +14,7 @@ export default function WebSeriesPage() {
   const [comedy, setComedy] = useState<Movie[]>([]);
   const [sciFi, setSciFi] = useState<Movie[]>([]);
   const [drama, setDrama] = useState<Movie[]>([]);
+  const [recommendations, setRecommendations] = useState<Movie[]>([]);
   
   const [loading, setLoading] = useState(true);
 
@@ -24,6 +25,7 @@ export default function WebSeriesPage() {
         const [
           trendRes,
           recentRes,
+          recRes,
           actionRes,
           comedyRes,
           scifiRes,
@@ -31,6 +33,7 @@ export default function WebSeriesPage() {
         ] = await Promise.all([
           fetchWebSeries(undefined, undefined, 1, 20).catch(() => ({ data: [] })),
           fetchWebSeries(undefined, undefined, 1, 20, 'recent').catch(() => ({ data: [] })),
+          fetchRecommendations(undefined, undefined, undefined, 'web_series').catch(() => []),
           fetchWebSeries('action', undefined, 1, 20).catch(() => ({ data: [] })),
           fetchWebSeries('comedy', undefined, 1, 20).catch(() => ({ data: [] })),
           fetchWebSeries('sci-fi', undefined, 1, 20).catch(() => ({ data: [] })),
@@ -45,6 +48,7 @@ export default function WebSeriesPage() {
         if (heroCandidate) setHeroMovie(heroCandidate);
         
         setRecentlyAdded(recentRes.data || []);
+        setRecommendations(recRes || []);
         setAction(actionRes.data || []);
         setComedy(comedyRes.data || []);
         setSciFi(scifiRes.data || []);
@@ -80,6 +84,7 @@ export default function WebSeriesPage() {
     <div className="dashboard-container">
       {heroMovie && <HeroBanner movie={heroMovie} />}
       <div className="dashboard-content">
+        {recommendations.length > 0 && <MovieRow title="Top Picks For You" movies={recommendations} />}
         {recentlyAdded.length > 0 && <MovieRow title="Recently Added" movies={recentlyAdded} />}
         {trending.length > 0 && <MovieRow title="Trending Web Series" movies={trending} />}
         {action.length > 0 && <MovieRow title="Action & Adventure Series" movies={action} />}
