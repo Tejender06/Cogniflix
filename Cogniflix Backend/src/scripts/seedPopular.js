@@ -1,19 +1,3 @@
-/*
-FILE: seedPopular.js
-
-PURPOSE:
-Fetches popular content from TMDB and seeds it into the local database.
-
-FLOW:
-Script -> TMDB API -> PostgreSQL
-
-USED BY:
-Developer/Admin manually
-
-NEXT FLOW:
-TMDB API / PostgreSQL Database
-
-*/
 import { fetchTMDB, initGenres, langRegionMap } from '../utils/tmdb.js';
 import { processItem } from '../services/search.service.js';
 import itemRepository from '../repositories/item.repository.js';
@@ -28,7 +12,7 @@ async function seedData() {
   // 1. Fetch by Language
   for (const [langCode, config] of Object.entries(langRegionMap)) {
     console.log(`Fetching popular movies and web series for language: ${config.langName}...`);
-    
+
     // Movies
     const moviesToInsert = [];
     for (let page = 1; page <= pagesToFetch; page++) {
