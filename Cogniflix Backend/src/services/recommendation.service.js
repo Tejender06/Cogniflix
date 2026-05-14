@@ -1,19 +1,3 @@
-/*
-FILE: recommendation.service.js
-
-PURPOSE:
-Core engine for generating personalized recommendations using multi-filters and SQL.
-
-FLOW:
-Controller -> recommendation.service.js -> Database/TMDB
-
-USED BY:
-recommendation.controller.js
-
-NEXT FLOW:
-PostgreSQL Database / tmdb.js
-
-*/
 import db from '../config/db.js';
 import { fetchTMDB, langRegionMap, movieGenreMap, initGenres } from '../utils/tmdb.js';
 import { processItem } from './search.service.js';
@@ -40,6 +24,7 @@ const TV_SERIAL_REGEX = '\\y(idol|roadies|bigg boss|splitsvilla|khatron ke khila
 const EXPLICIT_REGEX = '\\y(sex|porn|porno|hentai|erotica|erotic|adult|lustful|lust|sensual|naked|prostitute|prostitutes|seduction|sexual|sexually|cuckold|perverted|stepdad|stepdaddy|stepmom|impregnates|incest)\\y';
 
 async function dynamicFetch(mood, language, contentType, emotion, requiredCount) {
+  // Keeping dynamic fetch simple for fallback purposes. Ingestion should handle the bulk.
   await initGenres();
   
   let langCode = null;
@@ -173,7 +158,6 @@ async function getFallback(topK, mood, language, region, emotion = null) {
     result = await db.query(query, params);
   }
 
-  // Ensure diversity by slightly shuffling fallback based on score range
   const sorted = result.rows.sort((a, b) => b.popularity_score - a.popularity_score);
   return sorted;
 }
@@ -196,7 +180,46 @@ async function getRecommendations(userId, mood, language, region, contentType = 
       `SELECT embedding FROM user_embeddings WHERE user_id = $1`,
       [userId]
     );
-    const userEmbedding = embeddingResult.rows.length > 0 ? embeddingResult.rows[0] : null;
+    const userEmbedding = embeddingResult.rows.length > 0 ? embeddingResult.rows[0].embedding : null;
+
+    // Build the interactions implicitly mapping emotions
+    const interactionsResult = await db.query(`
+      SELECT i.created_at, COALESCE(i.score, 0) as score, it.genre, it.emotion_tag_id
+      FROM interactions i
+      JOIN items it ON i.item_id = it.id
+      WHERE i.user_id = $1 AND i.interaction_type IN ('watch', 'like', 'rate')
+    `, [userId]);
+
+    const interactions = interactionsResult.rows;
+    const now = new Date();
+    
+    const implicitEmotionMap = {};
+    let maxEmotionScore = 0;
+
+    for (const int of interactions) {
+      const daysDiff = (now - new Date(int.created_at)) / (1000 * 60 * 60 * 24);
+      const decay = Math.max(0.1, Math.exp(-0.05 * daysDiff));
+      const weight = (parseFloat(int.score) || 1) * decay;
+      
+      if (int.emotion_tag_id) {
+        implicitEmotionMap[int.emotion_tag_id] = (implicitEmotionMap[int.emotion_tag_id] || 0) + weight;
+        if (implicitEmotionMap[int.emotion_tag_id] > maxEmotionScore) {
+          maxEmotionScore = implicitEmotionMap[int.emotion_tag_id];
+        }
+      }
+    }
+
+    if (maxEmotionScore > 0) {
+      for (const k in implicitEmotionMap) {
+        implicitEmotionMap[k] = implicitEmotionMap[k] / maxEmotionScore;
+      }
+    }
+
+    // Time context
+    const currentHour = now.getHours();
+    const currentBucket = getBucket(currentHour);
+    const day = now.getDay();
+    const isWeekend = (day === 0 || day === 6);
 
     let queryArgs = [contentType, userId, TV_SERIAL_REGEX, EXPLICIT_REGEX];
     let filterClauses = [
@@ -210,8 +233,6 @@ async function getRecommendations(userId, mood, language, region, contentType = 
       "i.genre NOT ILIKE '%reality%'",
       "i.genre NOT ILIKE '%adult%'"
     ];
-
-    let selectSimilarity = ", 0 AS similarity_score";
 
     if (language) {
       const langs = language.split(',').map(l => l.trim()).filter(Boolean);
@@ -261,76 +282,6 @@ async function getRecommendations(userId, mood, language, region, contentType = 
       }
     }
 
-    let orderClause = `ORDER BY i.popularity_score DESC NULLS LAST LIMIT 600`;
-
-    if (userEmbedding && userEmbedding.embedding) {
-      queryArgs.push(userEmbedding.embedding);
-      const userVecParamIdx = queryArgs.length;
-      selectSimilarity = `, (1 - (i.embedding <=> $${userVecParamIdx}::vector)) AS similarity_score`;
-      orderClause = `ORDER BY i.embedding <=> $${userVecParamIdx}::vector LIMIT 600`;
-    }
-
-    const finalQuery = `
-      SELECT
-        i.id, i.title, i.description, i.genre, i.language, i.region,
-        i.poster_url, i.backdrop_url, i.popularity_score, i.content_type,
-        i.emotion_tag_id
-        ${selectSimilarity}
-      FROM items i
-      WHERE ${filterClauses.join(' AND ')}
-      ${orderClause}
-    `;
-
-    let candidatesResult = await db.query(finalQuery, queryArgs);
-    let candidates = candidatesResult.rows;
-
-    if (candidates.length < 20 && (language || mood || emotion)) {
-      await dynamicFetch(mood, language, contentType, emotion, 40 - candidates.length);
-      candidatesResult = await db.query(finalQuery, queryArgs);
-      candidates = candidatesResult.rows;
-    }
-
-    // 2. INTERACTIONS
-    const interactionsResult = await db.query(`
-      SELECT i.created_at, COALESCE(i.score, 0) as score, it.genre, it.emotion_tag_id
-      FROM interactions i
-      JOIN items it ON i.item_id = it.id
-      WHERE i.user_id = $1 AND i.interaction_type IN ('watch', 'like', 'rate')
-    `, [userId]);
-
-    const interactions = interactionsResult.rows;
-    const now = new Date();
-    
-    const implicitEmotionMap = {};
-    let maxEmotionScore = 0;
-
-    for (const int of interactions) {
-      const daysDiff = (now - new Date(int.created_at)) / (1000 * 60 * 60 * 24);
-      const decay = Math.max(0.1, Math.exp(-0.05 * daysDiff));
-      const weight = (parseFloat(int.score) || 1) * decay;
-      
-      if (int.emotion_tag_id) {
-        implicitEmotionMap[int.emotion_tag_id] = (implicitEmotionMap[int.emotion_tag_id] || 0) + weight;
-        if (implicitEmotionMap[int.emotion_tag_id] > maxEmotionScore) {
-          maxEmotionScore = implicitEmotionMap[int.emotion_tag_id];
-        }
-      }
-    }
-
-    if (maxEmotionScore > 0) {
-      for (const k in implicitEmotionMap) {
-        implicitEmotionMap[k] = implicitEmotionMap[k] / maxEmotionScore;
-      }
-    }
-
-    const currentHour = now.getHours();
-    const currentBucket = getBucket(currentHour);
-    const day = now.getDay();
-    const isWeekend = (day === 0 || day === 6);
-    
-    const scoredItems = [];
-    const maxPopScore = candidates.reduce((max, i) => Math.max(max, i.popularity_score || 0), 10); // Find max popularity dynamically to normalize
-
     // Weights setup (Total 1.0)
     const W1 = 0.25; // Popularity
     const W2 = 0.25; // Similarity
@@ -338,85 +289,90 @@ async function getRecommendations(userId, mood, language, region, contentType = 
     const W4 = 0.15; // Regional
     const W5 = 0.15; // Time
 
-    for (const item of candidates) {
-      // 1. POPULARITY (w1)
-      const popularity = Math.min((parseFloat(item.popularity_score || 0) / maxPopScore), 1.0);
+    // Score Calculations
+    // 1. Popularity (w1)
+    const popScoreExpr = `LEAST(COALESCE(i.popularity_score, 0) / 1000.0, 1.0)`; // Normalize against a reasonable max
 
-      // 2. SIMILARITY (w2)
-      let similarity = Math.max(0, parseFloat(item.similarity_score) || 0);
-      if (!userEmbedding) similarity = 0.5; // neutral if no history
-
-      // 3. EMOTION (w3)
-      let emotion_score = 0.1; // Baseline
-      if (item.emotion_tag_id && implicitEmotionMap[item.emotion_tag_id]) {
-        emotion_score = implicitEmotionMap[item.emotion_tag_id];
-      }
-
-      // 4. REGIONAL (w4)
-      let regional_score = 0;
-      const iReg = item.region?.toLowerCase();
-      const iLang = item.language?.toLowerCase();
-      
-      const targetRegion = region?.toLowerCase() || userLoc;
-      const targetLang = language?.toLowerCase() || userPrefLang;
-
-      if (targetRegion && iReg && iReg.includes(targetRegion)) {
-        regional_score += 0.6;
-      } else if (targetLang && iLang && iLang.includes(targetLang)) {
-        regional_score += 0.4;
-      } else if (targetRegion) {
-        const mappedLang = REGION_LANGUAGE_MAP[targetRegion];
-        if (mappedLang && iLang && iLang.includes(mappedLang)) {
-          regional_score += 0.3;
-        }
-      }
-      regional_score = Math.min(regional_score, 1.0);
-
-      // 5. TIME CONTEXT (w5)
-      let time_score = 0.5; // Baseline
-      if (item.genre) {
-        const itemGenres = item.genre.split(',').map(g => g.trim().toLowerCase());
-        let isLight = itemGenres.includes('comedy') || itemGenres.includes('family') || itemGenres.includes('animation');
-        let isHeavy = itemGenres.includes('thriller') || itemGenres.includes('horror') || itemGenres.includes('crime') || itemGenres.includes('mystery');
-        
-        if (currentBucket === 'morning' && isLight) time_score = 1.0;
-        else if (currentBucket === 'night' && isHeavy) time_score = 1.0;
-      }
-      
-      if (isWeekend) {
-        const itemGenres = item.genre ? item.genre.split(',').map(g => g.trim().toLowerCase()) : [];
-        if (itemGenres.includes('action') || itemGenres.includes('adventure') || itemGenres.includes('sci-fi')) {
-          time_score = Math.min(time_score + 0.5, 1.0);
-        }
-      }
-
-      const finalScore = (W1 * popularity) + 
-                         (W2 * similarity) + 
-                         (W3 * emotion_score) + 
-                         (W4 * regional_score) + 
-                         (W5 * time_score);
-
-      scoredItems.push({
-        ...item,
-        match_percentage: Math.round(finalScore * 100),
-        finalScore,
-        debug_scores: { popularity, similarity, emotion_score, regional_score, time_score }
-      });
+    // 2. Similarity (w2)
+    let simScoreExpr = "0.5";
+    if (userEmbedding) {
+      queryArgs.push(userEmbedding);
+      const userVecParamIdx = queryArgs.length;
+      simScoreExpr = `GREATEST(0, (1 - (i.embedding <=> $${userVecParamIdx}::vector)))`;
     }
 
-    scoredItems.sort((a, b) => b.finalScore - a.finalScore);
-
-    // Filter duplicates
-    const uniqueItems = [];
-    const seenIds = new Set();
-    for (const item of scoredItems) {
-      if (!seenIds.has(item.id)) {
-        uniqueItems.push(item);
-        seenIds.add(item.id);
+    // 3. Emotion (w3)
+    let emotionScoreExpr = "0.1";
+    if (Object.keys(implicitEmotionMap).length > 0) {
+      emotionScoreExpr = "CASE i.emotion_tag_id ";
+      for (const [eId, weight] of Object.entries(implicitEmotionMap)) {
+        emotionScoreExpr += `WHEN ${eId} THEN ${weight} `;
       }
+      emotionScoreExpr += "ELSE 0.1 END";
     }
 
-    return uniqueItems.slice(0, topK);
+    // 4. Regional (w4)
+    const targetRegion = region?.toLowerCase() || userLoc;
+    const targetLang = language?.toLowerCase() || userPrefLang;
+    
+    let regionalCases = "";
+    if (targetRegion) {
+      queryArgs.push(`%${targetRegion}%`);
+      regionalCases += `WHEN i.region ILIKE $${queryArgs.length} THEN 0.6 `;
+      const mappedLang = REGION_LANGUAGE_MAP[targetRegion];
+      if (mappedLang) {
+        queryArgs.push(`%${mappedLang}%`);
+        regionalCases += `WHEN i.language ILIKE $${queryArgs.length} THEN 0.3 `;
+      }
+    }
+    if (targetLang) {
+      queryArgs.push(`%${targetLang}%`);
+      regionalCases += `WHEN i.language ILIKE $${queryArgs.length} THEN 0.4 `;
+    }
+    const regionalScoreExpr = regionalCases ? `CASE ${regionalCases} ELSE 0.0 END` : "0.0";
+
+    // 5. Time Context (w5)
+    let timeScoreExpr = "0.5";
+    if (currentBucket === 'morning') {
+      timeScoreExpr = `CASE WHEN i.genre ILIKE '%comedy%' OR i.genre ILIKE '%family%' OR i.genre ILIKE '%animation%' THEN 1.0 ELSE 0.5 END`;
+    } else if (currentBucket === 'night') {
+      timeScoreExpr = `CASE WHEN i.genre ILIKE '%thriller%' OR i.genre ILIKE '%horror%' OR i.genre ILIKE '%crime%' OR i.genre ILIKE '%mystery%' THEN 1.0 ELSE 0.5 END`;
+    }
+    
+    if (isWeekend) {
+      timeScoreExpr = `LEAST((${timeScoreExpr}) + CASE WHEN i.genre ILIKE '%action%' OR i.genre ILIKE '%adventure%' OR i.genre ILIKE '%sci-fi%' THEN 0.5 ELSE 0 END, 1.0)`;
+    }
+
+    const finalScoreExpr = `((${W1} * ${popScoreExpr}) + (${W2} * ${simScoreExpr}) + (${W3} * ${emotionScoreExpr}) + (${W4} * ${regionalScoreExpr}) + (${W5} * ${timeScoreExpr}))`;
+
+    queryArgs.push(topK);
+    const limitParamIdx = queryArgs.length;
+
+    const finalQuery = `
+      SELECT
+        i.id, i.title, i.description, i.genre, i.language, i.region,
+        i.poster_url, i.backdrop_url, i.popularity_score, i.content_type,
+        i.emotion_tag_id,
+        ${simScoreExpr} AS similarity_score,
+        ${finalScoreExpr} AS finalScore,
+        ROUND((${finalScoreExpr} * 100)::numeric) AS match_percentage
+      FROM items i
+      WHERE ${filterClauses.join(' AND ')}
+      ORDER BY finalScore DESC NULLS LAST
+      LIMIT $${limitParamIdx}
+    `;
+
+    let candidatesResult = await db.query(finalQuery, queryArgs);
+    let candidates = candidatesResult.rows;
+
+    if (candidates.length < 20 && (language || mood || emotion)) {
+      // Dynamic fetch if we really have nothing
+      await dynamicFetch(mood, language, contentType, emotion, 40 - candidates.length);
+      candidatesResult = await db.query(finalQuery, queryArgs);
+      candidates = candidatesResult.rows;
+    }
+
+    return candidates;
   } catch (err) {
     console.error('Recommendation Engine Error:', err);
     return await getFallback(topK, mood, language, region, emotion);
@@ -449,17 +405,29 @@ async function getDashboardRecommendations(userId, mood, language, region, emoti
     const getMovies = (arr) => arr.filter(m => m.content_type === 'movie');
     const getWebSeries = (arr) => arr.filter(m => m.content_type === 'web_series');
 
-    let sim = allRecs.filter(m => m.debug_scores && m.debug_scores.similarity > 0.4);
-    let reg = allRecs.filter(m => m.debug_scores && m.debug_scores.regional_score > 0.3);
-    let tim = allRecs.filter(m => m.debug_scores && m.debug_scores.time_score > 0.6);
-    let moo = allRecs.filter(m => m.debug_scores && m.debug_scores.emotion_score > 0.5);
+    // Using match_percentage and scores from SQL query
+    let sim = allRecs.filter(m => m.similarity_score > 0.4);
+    // Since SQL no longer exposes individual debug scores, we'll infer categories safely:
+    // Or we could have added them to SELECT, but let's filter based on known properties.
+    let reg = allRecs.filter(m => {
+        const userReg = region?.toLowerCase();
+        const userLang = language?.toLowerCase();
+        return (userReg && m.region?.toLowerCase().includes(userReg)) || (userLang && m.language?.toLowerCase() === userLang);
+    });
+    
+    const currentHour = new Date().getHours();
+    const currentBucket = getBucket(currentHour);
+    let tim = allRecs.filter(m => {
+        if (currentBucket === 'morning') return m.genre?.toLowerCase().includes('comedy') || m.genre?.toLowerCase().includes('family');
+        if (currentBucket === 'night') return m.genre?.toLowerCase().includes('thriller') || m.genre?.toLowerCase().includes('horror');
+        return true;
+    });
+
+    let moo = allRecs.filter(m => m.emotion_tag_id != null);
     const india = allRecs.filter(m => m.region?.toLowerCase().includes('india') || m.language?.toLowerCase() === 'hindi');
 
     const heroMovie = allRecs.length > 0 ? allRecs[0] : (trendData[0] || null);
     if (heroMovie) globalSeen.add(heroMovie.id);
-
-    // Shuffle the lists slightly to ensure freshness between loads
-    const shuffle = (array) => array.sort(() => Math.random() - 0.5);
 
     return {
       heroMovie,

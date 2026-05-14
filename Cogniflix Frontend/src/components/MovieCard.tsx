@@ -1,26 +1,12 @@
 /*
 FILE: MovieCard.tsx
-
-PURPOSE:
-Displays an individual movie thumbnail and handles click interactions.
-
-FLOW:
-Component -> Click Event -> Navigation/Modal
-
-USED BY:
-MovieRow.tsx, MovieGrid.tsx
-
-NEXT FLOW:
-MovieInfoPage.tsx
-
 */
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Plus, ChevronDown } from "lucide-react";
 import "./moviecard.css";
 import { type Movie } from "../services/movieService";
-
 
 interface Props {
   movie: Movie;
@@ -30,27 +16,40 @@ interface Props {
 export default function MovieCard({ movie }: Props) {
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
+  const hoverTimeoutRef = useRef<number | null>(null);
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     navigate(`/movie/${movie.id}`, { state: { movie } });
   };
 
+  const handleMouseEnter = () => {
+    hoverTimeoutRef.current = window.setTimeout(() => {
+      setIsHovered(true);
+    }, 400); // Netflix delay to prevent accidental hovers
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    setIsHovered(false);
+  };
+
   return (
     <motion.div 
       className="movie-card-container"
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
-      initial={{ scale: 1 }}
-      whileHover={{ scale: 1.15, zIndex: 50 }}
-      transition={{ duration: 0.3, delay: 0.1 }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      initial={{ scale: 1, zIndex: 1 }}
+      animate={{ 
+        scale: isHovered ? 1.3 : 1, 
+        zIndex: isHovered ? 50 : 1,
+        y: isHovered ? -30 : 0
+      }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
     >
-      <div 
-        className="movie-card" 
-        onClick={handleClick}
-      >
+      <div className="movie-card" onClick={handleClick}>
         <img 
-          src={movie.poster_url || movie.backdrop_url || "https://via.placeholder.com/300x450?text=No+Poster"} 
+          src={movie.backdrop_url || movie.poster_url || "https://via.placeholder.com/300x170?text=No+Image"} 
           alt={movie.title} 
           loading="lazy"
           className="movie-card-image"
@@ -63,8 +62,8 @@ export default function MovieCard({ movie }: Props) {
           {isHovered && (
             <motion.div 
               className="movie-hover-details"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
@@ -86,8 +85,7 @@ export default function MovieCard({ movie }: Props) {
                 {movie.match_percentage && (
                   <span className="match-text">{movie.match_percentage}% Match</span>
                 )}
-                <span className="age-rating">U/A 13+</span>
-                <span>2h 15m</span>
+                <span className="age-rating">13+</span>
               </div>
 
               <div className="hover-genres">

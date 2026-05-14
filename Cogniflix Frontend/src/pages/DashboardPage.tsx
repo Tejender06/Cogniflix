@@ -1,18 +1,5 @@
 /*
 FILE: DashboardPage.tsx
-
-PURPOSE:
-Main landing page for authenticated users showing personalized content.
-
-FLOW:
-Component -> API Call -> Backend -> Response -> UI Render
-
-USED BY:
-AppRoutes.tsx
-
-NEXT FLOW:
-recommendation API call, MovieRow components
-
 */
 import { useEffect, useState } from "react";
 import HeroBanner from "../components/HeroBanner";
@@ -26,28 +13,21 @@ import "./dashboard.css";
 export default function DashboardPage() {
   const [history, setHistory] = useState<Movie[]>([]);
   
-  // Specific Rows
   const [similarityMovies, setSimilarityMovies] = useState<Movie[]>([]);
   const [similarityWebSeries, setSimilarityWebSeries] = useState<Movie[]>([]);
-  
   const [regionMovies, setRegionMovies] = useState<Movie[]>([]);
   const [regionWebSeries, setRegionWebSeries] = useState<Movie[]>([]);
-  
   const [moodMovies, setMoodMovies] = useState<Movie[]>([]);
   const [moodWebSeries, setMoodWebSeries] = useState<Movie[]>([]);
-  
   const [popularMovies, setPopularMovies] = useState<Movie[]>([]);
   const [popularWebSeries, setPopularWebSeries] = useState<Movie[]>([]);
-  
   const [indiaMovies, setIndiaMovies] = useState<Movie[]>([]);
   const [indiaWebSeries, setIndiaWebSeries] = useState<Movie[]>([]);
-  
-  const [loading, setLoading] = useState(true);
-  
-  const { heroMovie, setHeroMovie, mood, emotion, language, region } = useMovieContext();
-
   const [movieRecs, setMovieRecs] = useState<Movie[]>([]);
   const [tvRecs, setTvRecs] = useState<Movie[]>([]);
+
+  const [loading, setLoading] = useState(true);
+  const { heroMovie, setHeroMovie, mood, emotion, language, region } = useMovieContext();
 
   useEffect(() => {
     const loadData = async () => {
@@ -64,19 +44,14 @@ export default function DashboardPage() {
           
           setSimilarityMovies(dashboardData.similarityMovies || []);
           setSimilarityWebSeries(dashboardData.similarityWebSeries || []);
-          
           setRegionMovies(dashboardData.regionMovies || []);
           setRegionWebSeries(dashboardData.regionWebSeries || []);
-          
           setMoodMovies(dashboardData.moodMovies || []);
           setMoodWebSeries(dashboardData.moodWebSeries || []);
-          
           setIndiaMovies(dashboardData.indiaMovies || []);
           setIndiaWebSeries(dashboardData.indiaWebSeries || []);
-          
           setPopularMovies(dashboardData.popularMovies || []);
           setPopularWebSeries(dashboardData.popularWebSeries || []);
-          
           setMovieRecs(dashboardData.movieRecs || []);
           setTvRecs(dashboardData.tvRecs || []);
         }
@@ -86,61 +61,53 @@ export default function DashboardPage() {
         setLoading(false);
       }
     };
-
     loadData();
   }, [mood, emotion, language, region, setHeroMovie]); 
 
   if (loading) {
     return (
-      <div className="dashboard-container" style={{ paddingTop: '70px' }}>
+      <div className="dashboard-container">
         <SkeletonLoader type="banner" />
-        <div className="dashboard-content" style={{ padding: '0 4%' }}>
-          <SkeletonLoader type="title" style={{ marginTop: '30px' }} />
-          <div style={{ display: 'flex', gap: '10px', overflow: 'hidden', marginBottom: '40px' }}>
-            {[1, 2, 3, 4, 5, 6].map(i => <SkeletonLoader key={i} type="card" />)}
-          </div>
-          <SkeletonLoader type="title" />
-          <div style={{ display: 'flex', gap: '10px', overflow: 'hidden' }}>
-            {[1, 2, 3, 4, 5, 6].map(i => <SkeletonLoader key={i} type="card" />)}
-          </div>
+        <div className="dashboard-content" style={{ marginTop: '-50px' }}>
+          {[1, 2, 3].map(row => (
+            <div key={row} style={{ marginBottom: '40px' }}>
+              <SkeletonLoader type="title" />
+              <div style={{ display: 'flex', gap: '0.4vw', overflow: 'hidden' }}>
+                {[1, 2, 3, 4, 5, 6].map(i => <SkeletonLoader key={i} type="card" />)}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
   }
 
   const defaultMovie = heroMovie || similarityMovies[0] || popularMovies[0];
-  
   const regionName = region.length > 0 ? region.join(', ') : "";
+  const moodName = mood.length > 0 ? mood.join(', ') : "";
 
   return (
     <div className="dashboard-container">
       {defaultMovie && <HeroBanner movie={defaultMovie} />}
 
       <div className="dashboard-content">
-        {/* 1. Continue Watching */}
         {history.length > 0 && <MovieRow title="Continue Watching" movies={history} />}
         
-        {/* 2. Recommendations */}
-        {movieRecs.length > 0 && <MovieRow title={emotion.length > 0 && mood.length > 0 ? `Top ${emotion.join(', ')} ${mood.join(', ')} Movies For You` : emotion.length > 0 ? `Top ${emotion.join(', ')} Movies For You` : mood.length > 0 ? `Top ${mood.join(', ')} Movies For You` : "Recommended Movies"} movies={movieRecs} exploreUrl="/movies" />}
-        {tvRecs.length > 0 && <MovieRow title={emotion.length > 0 && mood.length > 0 ? `Top ${emotion.join(', ')} ${mood.join(', ')} Web Series For You` : emotion.length > 0 ? `Top ${emotion.join(', ')} Web Series For You` : mood.length > 0 ? `Top ${mood.join(', ')} Web Series For You` : "Recommended Web Series"} movies={tvRecs} exploreUrl="/tv" />}
-        {similarityMovies.length > 0 && <MovieRow title="Because You Watched (Movies)" movies={similarityMovies} />}
-        {similarityWebSeries.length > 0 && <MovieRow title="Because You Watched (Web Series)" movies={similarityWebSeries} />}
-        {moodMovies.length > 0 && <MovieRow title={mood.length > 0 ? `${mood.join(', ')} Movies` : "Top Genre Movies"} movies={moodMovies} />}
-        {moodWebSeries.length > 0 && <MovieRow title={mood.length > 0 ? `${mood.join(', ')} Web Series` : "Top Genre Web Series"} movies={moodWebSeries} />}
+        {movieRecs.length > 0 && <MovieRow title={moodName ? `Top ${moodName} Movies For You` : "Recommended Movies"} movies={movieRecs} exploreUrl="/movies" />}
+        {tvRecs.length > 0 && <MovieRow title={moodName ? `Top ${moodName} Web Series For You` : "Recommended Web Series"} movies={tvRecs} exploreUrl="/tv" />}
         
-        {/* 3. Trending */}
-        {indiaMovies.length > 0 && <MovieRow title="Trending Movies in India" movies={indiaMovies} />}
-        {indiaWebSeries.length > 0 && <MovieRow title="Trending Web Series in India" movies={indiaWebSeries} />}
+        {similarityMovies.length > 0 && <MovieRow title="Because You Watched" movies={similarityMovies} />}
+        
+        {moodMovies.length > 0 && <MovieRow title={moodName ? `${moodName} Movies` : "Top Genre Movies"} movies={moodMovies} />}
+        
+        {indiaMovies.length > 0 && <MovieRow title="Trending Now" movies={indiaMovies} />}
+        
         {region.length > 0 && regionMovies.length > 0 && (
-          <MovieRow title={`Trending Movies in ${regionName}`} movies={regionMovies} />
-        )}
-        {region.length > 0 && regionWebSeries.length > 0 && (
-          <MovieRow title={`Trending Web Series in ${regionName}`} movies={regionWebSeries} />
+          <MovieRow title={`Trending in ${regionName}`} movies={regionMovies} />
         )}
 
-        {/* 4. Popular */}
-        {popularMovies.length > 0 && <MovieRow title="Global Popular Movies" movies={popularMovies} />}
-        {popularWebSeries.length > 0 && <MovieRow title="Global Popular Web Series" movies={popularWebSeries} />}
+        {popularMovies.length > 0 && <MovieRow title="Popular on Cogniflix" movies={popularMovies} />}
+        {popularWebSeries.length > 0 && <MovieRow title="Binge-Worthy Series" movies={popularWebSeries} />}
       </div>
     </div>
   );
