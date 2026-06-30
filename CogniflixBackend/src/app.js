@@ -33,7 +33,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 const allowedOrigins = [
-  "https://main.d3pelnl55s3qgs.amplifyapp.com",
+  "https://cogniflix.vercel.app",
   "http://localhost:3000",
   "http://localhost:5173",
 ];
