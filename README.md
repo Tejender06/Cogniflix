@@ -37,7 +37,8 @@ Cogniflix goes beyond basic collaborative filtering by integrating Gemini AI wit
 - **External Data:** TMDB API
 
 ## 🚀 Live Environments
-- **Frontend (Production):** [https://cogniflix.vercel.app](https://cogniflix.vercel.app)
+- **Frontend (Vercel):** [https://cogniflix.vercel.app](https://cogniflix.vercel.app)
+- **Frontend (AWS Amplify):** [https://main.d3pelnl55s3qgs.amplifyapp.com/](https://main.d3pelnl55s3qgs.amplifyapp.com/)
 - **Backend (Production):** Render
 
 ## 💻 Local Setup
