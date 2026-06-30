@@ -18,6 +18,7 @@ app.use(cookieParser());
 
 const allowedOrigins = [
   "https://cogniflix.vercel.app",
+  "https://main.d3pelnl55s3qgs.amplifyapp.com",
   "http://localhost:3000",
   "http://localhost:5173",
 ];

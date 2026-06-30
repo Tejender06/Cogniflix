@@ -49,7 +49,7 @@ export default function MovieInfoPage() {
       }
     };
     loadData();
-  }, [id]);
+  }, [id, passedMovie?.match_percentage]);
 
   const handleInteraction = async (type: 'watch' | 'like' | 'dislike' | 'rate' | 'save', score?: number) => {
     if (!movie) return;

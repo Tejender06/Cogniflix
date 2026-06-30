@@ -82,7 +82,6 @@ export default function HeroBanner({ movie }: { movie: Movie }) {
         style={{ 
           backgroundImage: `url('${bgUrl}')`,
           zIndex: 0,
-          filter: 'blur(20px) brightness(0.4)',
         }}
       ></div>
 

@@ -45,20 +45,21 @@ export default function MultiSelectDropdown({
         aria-haspopup="menu"
         aria-expanded={isOpen}
         sx={{
-          minWidth: 116,
+          minWidth: 100,
           justifyContent: "space-between",
-          borderColor: alpha("#fff", 0.18),
-          color: "text.primary",
-          bgcolor: alpha("#000", 0.32),
-          backdropFilter: "blur(14px)",
-          px: 1.25,
+          borderColor: "transparent",
+          color: "#e5e5e5",
+          bgcolor: "transparent",
+          textTransform: "none",
+          p: 0,
           "&:hover": {
-            borderColor: alpha("#fff", 0.42),
-            bgcolor: alpha("#fff", 0.08),
+            color: "#fff",
+            bgcolor: "transparent",
+            borderColor: "transparent",
           },
         }}
       >
-        <Typography component="span" variant="caption" sx={{ fontWeight: 800 }} noWrap>
+        <Typography component="span" variant="body1" sx={{ fontWeight: 600 }} noWrap>
           {selected.length > 0 ? `${label} (${selected.length})` : label}
         </Typography>
       </Button>

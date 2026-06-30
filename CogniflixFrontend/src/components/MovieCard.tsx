@@ -38,9 +38,9 @@ export default function MovieCard({ movie }: Props) {
       onMouseLeave={handleMouseLeave}
       initial={{ scale: 1, zIndex: 1 }}
       animate={{ 
-        scale: isHovered ? 1.3 : 1, 
+        scale: isHovered ? 1.2 : 1, 
         zIndex: isHovered ? 50 : 1,
-        y: isHovered ? -30 : 0
+        y: isHovered ? -20 : 0
       }}
       transition={{ duration: 0.3, ease: "easeOut" }}
     >
@@ -54,7 +54,7 @@ export default function MovieCard({ movie }: Props) {
             (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=500&q=80';
           }}
         />
-        <div className="movie-card-title">{movie.title}</div>
+        <div className="movie-card-title" style={{ opacity: isHovered ? 0 : 1 }}>{movie.title}</div>
         
         <AnimatePresence>
           {isHovered && (

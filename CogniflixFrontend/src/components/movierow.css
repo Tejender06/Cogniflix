@@ -61,7 +61,8 @@
   gap: 0.4vw;
   overflow-x: scroll;
   overflow-y: visible;
-  padding: 1.5vw 0 40px 0; /* Padding allows hover scale without clipping, and bottom padding for title */
+  padding: 1.5vw 0 90px 0; /* Huge bottom padding for hover details to not clip */
+  margin-bottom: -70px; /* Pull the next row up to hide the extra padding visually */
   scroll-behavior: smooth;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none;  /* IE and Edge */

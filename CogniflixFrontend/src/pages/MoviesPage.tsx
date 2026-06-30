@@ -82,11 +82,11 @@ export default function MoviesPage() {
         <SkeletonLoader type="banner" />
         <div className="dashboard-content" style={{ padding: '0 4%' }}>
           <SkeletonLoader type="title" style={{ marginTop: '30px' }} />
-          <div style={{ display: 'flex', gap: '10px', overflow: 'hidden', marginBottom: '40px' }}>
+          <div style={{ display: 'flex', gap: '0.4vw', overflow: 'hidden', marginBottom: '40px' }}>
             {[1, 2, 3, 4, 5, 6].map(i => <SkeletonLoader key={i} type="card" />)}
           </div>
           <SkeletonLoader type="title" />
-          <div style={{ display: 'flex', gap: '10px', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', gap: '0.4vw', overflow: 'hidden' }}>
             {[1, 2, 3, 4, 5, 6].map(i => <SkeletonLoader key={i} type="card" />)}
           </div>
         </div>
