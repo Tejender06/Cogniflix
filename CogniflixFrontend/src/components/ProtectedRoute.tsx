@@ -1,9 +1,3 @@
-/*
-FILE: ProtectedRoute.tsx
-
-PURPOSE:
-Guards routes requiring authentication, redirecting if necessary.
-*/
 import { useState, useEffect } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import SkeletonLoader from "./SkeletonLoader";

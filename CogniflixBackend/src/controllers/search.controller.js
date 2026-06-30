@@ -1,19 +1,3 @@
-/*
-FILE: search.controller.js
-
-PURPOSE:
-Handles incoming search queries from users and returns matching movies or web series.
-
-FLOW:
-Routes -> Controller -> search.service.js
-
-USED BY:
-search.routes.js
-
-NEXT FLOW:
-search.service.js
-
-*/
 import { searchMovie } from '../services/search.service.js';
 
 export async function search(req, res) {

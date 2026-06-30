@@ -1,19 +1,3 @@
-/*
-FILE: item.repository.js
-
-PURPOSE:
-Manages database operations related to content items (movies, web series).
-
-FLOW:
-Service -> Repository -> Database
-
-USED BY:
-movie.service.js, search.service.js
-
-NEXT FLOW:
-PostgreSQL Database
-
-*/
 import pool from '../config/db.js';
 
 class ItemRepository {

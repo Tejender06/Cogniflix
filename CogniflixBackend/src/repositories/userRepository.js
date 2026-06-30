@@ -1,19 +1,3 @@
-/*
-FILE: userRepository.js
-
-PURPOSE:
-Fetches user data and credentials from database.
-
-FLOW:
-Service -> Repository -> Database
-
-USED BY:
-authService.js, recommendation.service.js
-
-NEXT FLOW:
-PostgreSQL Database
-
-*/
 import db from '../config/db.js';
 
 async function findUserByEmail(email) {

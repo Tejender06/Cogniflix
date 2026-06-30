@@ -1,19 +1,3 @@
-/*
-FILE: NewAndPopularPage.tsx
-
-PURPOSE:
-Displays newly added and currently popular content.
-
-FLOW:
-Component -> API Call -> Backend -> Response -> UI Render
-
-USED BY:
-AppRoutes.tsx
-
-NEXT FLOW:
-movieService.ts
-
-*/
 import { useEffect, useState } from "react";
 import { fetchTrendingMovies } from "../services/movieService";
 import type { Movie } from "../services/movieService";

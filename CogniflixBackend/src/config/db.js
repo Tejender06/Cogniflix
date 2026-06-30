@@ -1,19 +1,3 @@
-/*
-FILE: db.js
-
-PURPOSE:
-Creates PostgreSQL connection pool for Supabase.
-
-FLOW:
-Backend -> DB Connection -> Query Execution
-
-USED BY:
-Repositories
-
-NEXT FLOW:
-Database queries
-
-*/
 import 'dotenv/config';
 import pkg from 'pg';
 const { Pool } = pkg;

@@ -1,19 +1,3 @@
-/*
-FILE: jwt.js
-
-PURPOSE:
-Provides utility functions for generating and verifying JSON Web Tokens.
-
-FLOW:
-Service -> Util -> Value Return
-
-USED BY:
-authService.js, authMiddleware.js
-
-NEXT FLOW:
-None
-
-*/
 import jwt from 'jsonwebtoken';
 
 const generateToken = (user) => {

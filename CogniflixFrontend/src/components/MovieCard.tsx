@@ -1,6 +1,3 @@
-/*
-FILE: MovieCard.tsx
-*/
 import { useNavigate } from "react-router-dom";
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";

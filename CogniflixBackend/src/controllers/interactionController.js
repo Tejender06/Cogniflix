@@ -1,19 +1,3 @@
-/*
-FILE: interactionController.js
-
-PURPOSE:
-Handles incoming user interactions (likes, saves, ratings) requests and sends response.
-
-FLOW:
-Routes -> Controller -> Service
-
-USED BY:
-interactionRoutes.js
-
-NEXT FLOW:
-interactionService.js
-
-*/
 import * as interactionService from '../services/interactionService.js';
 
 async function addInteraction(req, res) {

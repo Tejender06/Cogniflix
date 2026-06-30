@@ -1,19 +1,3 @@
-/*
-FILE: MyListPage.tsx
-
-PURPOSE:
-Displays the user's saved list of movies/shows.
-
-FLOW:
-Component -> API Call -> Backend -> Response -> UI Render
-
-USED BY:
-AppRoutes.tsx
-
-NEXT FLOW:
-interaction API call, MovieGrid.tsx
-
-*/
 import { useEffect, useState } from "react";
 import { fetchSavedMovies } from "../services/movieService";
 import type { Movie } from "../services/movieService";

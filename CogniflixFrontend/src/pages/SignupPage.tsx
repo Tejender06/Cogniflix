@@ -1,19 +1,3 @@
-/*
-FILE: SignupPage.tsx
-
-PURPOSE:
-Handles new user registration input and form submission.
-
-FLOW:
-Component -> Form Submit -> authService -> Backend -> Navigation
-
-USED BY:
-AppRoutes.tsx
-
-NEXT FLOW:
-authService.ts
-
-*/
 import { useState } from "react";
 import { Mail, Lock, Eye, User } from "lucide-react";
 import { motion } from "framer-motion";

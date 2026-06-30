@@ -1,19 +1,3 @@
-/*
-FILE: MoviesPage.tsx
-
-PURPOSE:
-Dedicated page for displaying movies, categorized by genres, trending, and recommendations.
-
-FLOW:
-Router -> MoviesPage -> movieService.ts -> UI
-
-USED BY:
-AppRoutes.tsx
-
-NEXT FLOW:
-MovieRow.tsx / movieService.ts
-
-*/
 import { useEffect, useState } from "react";
 import { fetchMovies, fetchTrendingMovies, fetchRecommendations, fetchHistory } from "../services/movieService";
 import { useMovieContext } from "../context/MovieContext";

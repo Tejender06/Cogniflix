@@ -1,19 +1,3 @@
-/*
-FILE: emotionMap.js
-
-PURPOSE:
-Provides mappings for emotion-based movie tagging.
-
-FLOW:
-Service -> Util -> Value Return
-
-USED BY:
-recommendation.service.js
-
-NEXT FLOW:
-None
-
-*/
 const emotionMap = {
   // Action / High Energy
   action: "intense",

@@ -1,19 +1,3 @@
-/*
-FILE: recommendation.controller.js
-
-PURPOSE:
-Handles incoming recommendation requests and sends response.
-
-FLOW:
-Routes -> Controller -> Service
-
-USED BY:
-recommendation.routes.js
-
-NEXT FLOW:
-recommendation.service.js
-
-*/
 import * as recommendationService from '../services/recommendation.service.js';
 
 const getRecommendations = async (req, res) => {

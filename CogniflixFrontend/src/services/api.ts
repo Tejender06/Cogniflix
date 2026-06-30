@@ -1,9 +1,3 @@
-/*
-FILE: api.ts
-
-PURPOSE:
-Handles base Axios configuration and interceptors for backend API calls.
-*/
 import axios from 'axios';
 
 const api = axios.create({

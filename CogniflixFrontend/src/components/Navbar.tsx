@@ -1,19 +1,3 @@
-/*
-FILE: Navbar.tsx
-
-PURPOSE:
-Main navigation bar for routing and user actions.
-
-FLOW:
-Component -> User Interaction -> Route Change
-
-USED BY:
-MainLayout.tsx
-
-NEXT FLOW:
-AppRoutes
-
-*/
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";

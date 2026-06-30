@@ -1,19 +1,3 @@
-/*
-FILE: MovieInfoPage.tsx
-
-PURPOSE:
-Displays detailed information and interactive actions for a specific movie.
-
-FLOW:
-Component -> API Call -> Backend -> Response -> UI Render
-
-USED BY:
-AppRoutes.tsx
-
-NEXT FLOW:
-movieService.ts
-
-*/
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { fetchMovieById, postInteraction, fetchSimilarMovies, fetchSavedMovies, deleteSavedInteraction, deleteInteraction } from "../services/movieService";

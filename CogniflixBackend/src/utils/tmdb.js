@@ -1,19 +1,3 @@
-/*
-FILE: tmdb.js
-
-PURPOSE:
-Axios instance and utility functions for interfacing directly with the TMDB API.
-
-FLOW:
-Services -> tmdb.js -> External TMDB API
-
-USED BY:
-recommendation.service.js, seedPopular.js
-
-NEXT FLOW:
-External API
-
-*/
 import axios from 'axios';
 import dotenv from 'dotenv';
 dotenv.config(); // Assuming it runs from root where .env is or handled by app.js

@@ -1,19 +1,3 @@
-/*
-FILE: SkeletonLoader.tsx
-
-PURPOSE:
-Displays a loading placeholder state for UI components.
-
-FLOW:
-Component -> UI Render
-
-USED BY:
-Various Components during loading state
-
-NEXT FLOW:
-None
-
-*/
 import "./skeleton.css";
 
 interface SkeletonProps {

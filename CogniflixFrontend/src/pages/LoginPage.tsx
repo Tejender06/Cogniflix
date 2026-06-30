@@ -1,9 +1,3 @@
-/*
-FILE: LoginPage.tsx
-
-PURPOSE:
-Handles user authentication input and form submission.
-*/
 import { useState, useEffect } from "react";
 import { Mail, Lock, Eye } from "lucide-react";
 import { motion } from "framer-motion";

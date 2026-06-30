@@ -1,6 +1,3 @@
-/*
-FILE: MovieRow.tsx
-*/
 import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import MovieCard from "./MovieCard";

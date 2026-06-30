@@ -1,19 +1,3 @@
-/*
-FILE: HeroBanner.tsx
-
-PURPOSE:
-Displays the featured movie/show banner at the top of main pages.
-
-FLOW:
-Component -> API Call -> Backend -> Response -> UI Render
-
-USED BY:
-DashboardPage.tsx, MoviesPage.tsx
-
-NEXT FLOW:
-UI Rendering
-
-*/
 import { useEffect, useState } from "react";
 import type { Movie } from "../services/movieService";
 import { useNavigate } from "react-router-dom";

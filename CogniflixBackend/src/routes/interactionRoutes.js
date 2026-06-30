@@ -1,19 +1,3 @@
-/*
-FILE: interactionRoutes.js
-
-PURPOSE:
-Defines API endpoints for recording user interactions.
-
-FLOW:
-Client -> Routes -> Controller
-
-USED BY:
-app.js
-
-NEXT FLOW:
-interactionController.js
-
-*/
 import express from 'express';
 const router = express.Router();
 

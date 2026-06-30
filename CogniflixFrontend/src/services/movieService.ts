@@ -1,19 +1,3 @@
-/*
-FILE: movieService.ts
-
-PURPOSE:
-Frontend API service layer abstracting all interactions with backend movie/recommendation endpoints.
-
-FLOW:
-Components/Pages -> movieService.ts -> api.ts (Axios)
-
-USED BY:
-All Pages & Components requiring data
-
-NEXT FLOW:
-api.ts / Backend Endpoints
-
-*/
 import api from "./api";
 
 export type Movie = {

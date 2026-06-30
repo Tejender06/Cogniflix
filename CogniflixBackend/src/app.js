@@ -1,19 +1,3 @@
-/*
-FILE: app.js
-
-PURPOSE:
-Configures the Express application, middleware, and route mounting.
-
-FLOW:
-Server Start -> Middleware -> Routes
-
-USED BY:
-server.js
-
-NEXT FLOW:
-Routes (authRoutes.js, movieRoutes.js, etc.)
-
-*/
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';

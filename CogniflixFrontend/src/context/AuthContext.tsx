@@ -1,19 +1,3 @@
-/*
-FILE: AuthContext.tsx
-
-PURPOSE:
-Provides global authentication state to the application.
-
-FLOW:
-Context -> Components -> UI Update based on auth
-
-USED BY:
-App.tsx, ProtectedRoute.tsx
-
-NEXT FLOW:
-None
-
-*/
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { getCurrentUser } from "../services/authService";

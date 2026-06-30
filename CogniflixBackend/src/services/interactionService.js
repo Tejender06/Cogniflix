@@ -1,19 +1,3 @@
-/*
-FILE: interactionService.js
-
-PURPOSE:
-Processes user interactions and orchestrates embedding updates.
-
-FLOW:
-Controller -> interactionService.js -> interactionRepository.js
-
-USED BY:
-interactionController.js
-
-NEXT FLOW:
-interactionRepository.js / embedding.service.js
-
-*/
 import * as interactionRepository from '../repositories/interactionRepository.js';
 import { updateUserEmbedding } from './embedding.service.js';
 

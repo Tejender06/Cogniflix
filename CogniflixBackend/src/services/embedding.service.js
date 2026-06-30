@@ -1,19 +1,3 @@
-/*
-FILE: embedding.service.js
-
-PURPOSE:
-Calculates and manages user vector embeddings based on watch history and interactions.
-
-FLOW:
-Controller -> embedding.service.js -> Repositories
-
-USED BY:
-interactionService.js, recommendation.service.js
-
-NEXT FLOW:
-userEmbedding.repository.js
-
-*/
 import db from '../config/db.js';
 import { upsertUserEmbedding } from '../repositories/userEmbedding.repository.js';
 
